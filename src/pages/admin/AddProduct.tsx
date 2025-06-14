@@ -1,7 +1,7 @@
 
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Upload, X } from 'lucide-react';
+import { ArrowLeft, Upload, X, Plus, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -20,9 +20,11 @@ const AddProduct = () => {
     category: 'all' as 'men' | 'women' | 'all',
     sizes: ['S', 'M', 'L'] as string[],
     colors: [{ name: 'Black', value: '#000000' }] as { name: string; value: string }[],
-    features: [''] as string[]
+    features: [''] as string[],
+    images: [] as string[]
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -35,6 +37,36 @@ const AddProduct = () => {
     if (errors[name]) {
       setErrors(prev => ({ ...prev, [name]: '' }));
     }
+  };
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    
+    files.forEach(file => {
+      if (file.type.startsWith('image/')) {
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          const imageUrl = event.target?.result as string;
+          setFormData(prev => ({
+            ...prev,
+            images: [...prev.images, imageUrl]
+          }));
+          setUploadedFiles(prev => [...prev, file]);
+        };
+        reader.readAsDataURL(file);
+      }
+    });
+    
+    // Clear the input
+    e.target.value = '';
+  };
+
+  const handleImageRemove = (index: number) => {
+    setFormData(prev => ({
+      ...prev,
+      images: prev.images.filter((_, i) => i !== index)
+    }));
+    setUploadedFiles(prev => prev.filter((_, i) => i !== index));
   };
 
   const handleSizeToggle = (size: string) => {
@@ -127,6 +159,10 @@ const AddProduct = () => {
       newErrors.features = 'Remove empty features or fill them in';
     }
 
+    if (formData.images.length === 0) {
+      newErrors.images = 'At least one product image is required';
+    }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -146,8 +182,8 @@ const AddProduct = () => {
       price,
       originalPrice,
       discount: originalPrice ? Math.round(((originalPrice - price) / originalPrice) * 100) : undefined,
-      image: 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=500&h=500&fit=crop',
-      images: [
+      image: formData.images[0] || 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=500&h=500&fit=crop',
+      images: formData.images.length > 0 ? formData.images : [
         'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=500&h=500&fit=crop',
         'https://images.unsplash.com/photo-1503341504253-dff4815485f1?w=500&h=500&fit=crop'
       ],
@@ -176,9 +212,10 @@ const AddProduct = () => {
     try {
       const newProduct = createProduct();
       
-      // In a real app, this would make an API call
+      // In a real app, this would make an API call to save the product and upload images
       // For now, we'll just simulate success
       console.log('New product created:', newProduct);
+      console.log('Uploaded files:', uploadedFiles);
       
       toast({
         title: "Success!",
@@ -314,14 +351,61 @@ const AddProduct = () => {
           {/* Images */}
           <Card>
             <CardHeader>
-              <CardTitle>Product Images</CardTitle>
+              <CardTitle>Product Images *</CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="space-y-4">
               <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
                 <Upload className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-                <p className="text-gray-600">Placeholder image will be used for demo</p>
-                <p className="text-sm text-gray-500 mt-2">In production, implement file upload here</p>
+                <p className="text-gray-600 mb-4">Upload product images</p>
+                <input
+                  type="file"
+                  multiple
+                  accept="image/*"
+                  onChange={handleImageUpload}
+                  className="hidden"
+                  id="image-upload"
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => document.getElementById('image-upload')?.click()}
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Add Images
+                </Button>
+                <p className="text-sm text-gray-500 mt-2">PNG, JPG, GIF up to 10MB each</p>
               </div>
+              
+              {/* Image Preview */}
+              {formData.images.length > 0 && (
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
+                  {formData.images.map((image, index) => (
+                    <div key={index} className="relative group">
+                      <img
+                        src={image}
+                        alt={`Product ${index + 1}`}
+                        className="w-full h-32 object-cover rounded-lg border"
+                      />
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        size="sm"
+                        className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
+                        onClick={() => handleImageRemove(index)}
+                      >
+                        <Trash2 size={14} />
+                      </Button>
+                      {index === 0 && (
+                        <div className="absolute bottom-2 left-2 bg-black bg-opacity-75 text-white text-xs px-2 py-1 rounded">
+                          Main
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+              
+              {errors.images && <p className="text-red-500 text-sm mt-2">{errors.images}</p>}
             </CardContent>
           </Card>
 
