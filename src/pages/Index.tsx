@@ -1,5 +1,3 @@
-
-
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import Header from '@/components/Header';
@@ -7,12 +5,13 @@ import ProductCard from '@/components/ProductCard';
 import SizeGuide from '@/components/SizeGuide';
 import ShippingInfo from '@/components/ShippingInfo';
 import Contact from '@/components/Contact';
-import { products } from '@/data/products';
+import { useProducts } from '@/contexts/ProductsContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 
 const Index = () => {
+  const { products } = useProducts();
   const featuredProducts = products.slice(0, 4);
   const [showSizeGuide, setShowSizeGuide] = useState(false);
   const [showShippingInfo, setShowShippingInfo] = useState(false);
@@ -221,4 +220,3 @@ const Index = () => {
 };
 
 export default Index;
-

@@ -1,13 +1,13 @@
-
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Plus, Edit, Trash2, Search } from 'lucide-react';
-import { products } from '@/data/products';
+import { useProducts } from '@/contexts/ProductsContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 const AdminProducts = () => {
+  const { products } = useProducts();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
 

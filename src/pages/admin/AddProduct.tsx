@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Upload, X, Plus, Trash2 } from 'lucide-react';
@@ -9,9 +8,12 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from '@/hooks/use-toast';
 import { Product } from '@/data/products';
+import { useProducts } from '@/contexts/ProductsContext';
 
 const AddProduct = () => {
   const navigate = useNavigate();
+  const { addProduct } = useProducts();
+  
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -212,14 +214,14 @@ const AddProduct = () => {
     try {
       const newProduct = createProduct();
       
-      // In a real app, this would make an API call to save the product and upload images
-      // For now, we'll just simulate success
-      console.log('New product created:', newProduct);
-      console.log('Uploaded files:', uploadedFiles);
+      // Add the product to the global state
+      addProduct(newProduct);
+      
+      console.log('New product added:', newProduct);
       
       toast({
         title: "Success!",
-        description: "Product has been added successfully"
+        description: "Product has been added successfully and will appear on the products page"
       });
       
       navigate('/admin/products');

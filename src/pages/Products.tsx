@@ -1,10 +1,10 @@
-
 import { useState } from 'react';
 import Header from '@/components/Header';
 import ProductCard from '@/components/ProductCard';
-import { products } from '@/data/products';
+import { useProducts } from '@/contexts/ProductsContext';
 
 const Products = () => {
+  const { products } = useProducts();
   const [sortBy, setSortBy] = useState('newest');
 
   const sortedProducts = [...products].sort((a, b) => {
