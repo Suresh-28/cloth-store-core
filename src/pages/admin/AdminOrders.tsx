@@ -1,4 +1,5 @@
-import { useState } from 'react';
+
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Eye, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -22,12 +23,20 @@ const AdminOrders = () => {
   const [selectedStatus, setSelectedStatus] = useState('all');
 
   console.log('AdminOrders - Current orders:', orders);
+  console.log('AdminOrders - Orders length:', orders.length);
+
+  // Force re-render when orders change
+  useEffect(() => {
+    console.log('AdminOrders - useEffect triggered, orders updated:', orders);
+  }, [orders]);
 
   const filteredOrders = orders.filter(order => 
     (order.customer.toLowerCase().includes(searchTerm.toLowerCase()) ||
      order.id.includes(searchTerm)) &&
     (selectedStatus === 'all' || order.status === selectedStatus)
   );
+
+  console.log('AdminOrders - Filtered orders:', filteredOrders);
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -90,7 +99,7 @@ const AdminOrders = () => {
 
         <Card>
           <CardHeader>
-            <CardTitle>All Orders</CardTitle>
+            <CardTitle>All Orders ({orders.length} total)</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="overflow-x-auto">
@@ -140,7 +149,11 @@ const AdminOrders = () => {
 
             {filteredOrders.length === 0 && (
               <div className="text-center py-12">
-                <p className="text-gray-600">No orders found matching your criteria.</p>
+                <p className="text-gray-600">
+                  {orders.length === 0 
+                    ? 'No orders found. Orders from payments will appear here.' 
+                    : 'No orders found matching your criteria.'}
+                </p>
               </div>
             )}
           </CardContent>
