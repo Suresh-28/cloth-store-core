@@ -21,6 +21,8 @@ const AdminOrders = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedStatus, setSelectedStatus] = useState('all');
 
+  console.log('AdminOrders - Current orders:', orders);
+
   const filteredOrders = orders.filter(order => 
     (order.customer.toLowerCase().includes(searchTerm.toLowerCase()) ||
      order.id.includes(searchTerm)) &&
@@ -115,8 +117,8 @@ const AdminOrders = () => {
                         </div>
                       </td>
                       <td className="py-3 px-4 text-gray-600">{order.date}</td>
-                      <td className="py-3 px-4 text-gray-600">{order.items.length}</td>
-                      <td className="py-3 px-4 font-medium">£{order.total}</td>
+                      <td className="py-3 px-4 text-gray-600">{order.items?.length || 0}</td>
+                      <td className="py-3 px-4 font-medium">£{order.total.toFixed(2)}</td>
                       <td className="py-3 px-4">
                         <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(order.status)}`}>
                           {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
