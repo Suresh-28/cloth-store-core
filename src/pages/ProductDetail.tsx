@@ -5,7 +5,7 @@ import Header from '@/components/Header';
 import SizeGuide from '@/components/SizeGuide';
 import ShippingInfo from '@/components/ShippingInfo';
 import Contact from '@/components/Contact';
-import { products } from '@/data/products';
+import { useProducts } from '@/contexts/ProductsContext';
 import { Button } from '@/components/ui/button';
 import { useCart } from '@/contexts/CartContext';
 import { useWishlist } from '@/contexts/WishlistContext';
@@ -14,6 +14,7 @@ import { cn } from '@/lib/utils';
 
 const ProductDetail = () => {
   const { id } = useParams();
+  const { products } = useProducts();
   const product = products.find(p => p.id === id);
   const [selectedSize, setSelectedSize] = useState('');
   const [selectedColor, setSelectedColor] = useState('');
