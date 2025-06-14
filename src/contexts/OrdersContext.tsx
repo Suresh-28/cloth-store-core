@@ -1,5 +1,5 @@
 
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 
 export interface OrderItem {
   id: string;
@@ -41,10 +41,37 @@ interface OrdersContextType {
 
 const OrdersContext = createContext<OrdersContextType | undefined>(undefined);
 
+const ORDERS_STORAGE_KEY = 'loom-co-orders';
+
 export const OrdersProvider = ({ children }: { children: ReactNode }) => {
   const [orders, setOrders] = useState<Order[]>([]);
 
+  // Load orders from localStorage on mount
+  useEffect(() => {
+    try {
+      const savedOrders = localStorage.getItem(ORDERS_STORAGE_KEY);
+      if (savedOrders) {
+        const parsedOrders = JSON.parse(savedOrders);
+        setOrders(parsedOrders);
+        console.log('OrdersProvider - Loaded orders from localStorage:', parsedOrders);
+      }
+    } catch (error) {
+      console.error('Error loading orders from localStorage:', error);
+    }
+  }, []);
+
+  // Save orders to localStorage whenever orders change
+  useEffect(() => {
+    try {
+      localStorage.setItem(ORDERS_STORAGE_KEY, JSON.stringify(orders));
+      console.log('OrdersProvider - Saved orders to localStorage:', orders);
+    } catch (error) {
+      console.error('Error saving orders to localStorage:', error);
+    }
+  }, [orders]);
+
   const addOrder = (order: Order) => {
+    console.log('OrdersProvider - Adding order:', order);
     setOrders(prev => [order, ...prev]);
   };
 
