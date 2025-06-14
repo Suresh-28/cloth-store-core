@@ -1,4 +1,3 @@
-
 import { Link } from 'react-router-dom';
 import Header from '@/components/Header';
 import ProductCard from '@/components/ProductCard';
@@ -101,8 +100,6 @@ const Index = () => {
               <h3 className="font-medium text-gray-900 mb-4">Shop</h3>
               <ul className="space-y-2 text-gray-600">
                 <li><Link to="/products" className="hover:text-gray-900">All Products</Link></li>
-                <li><Link to="/products" className="hover:text-gray-900">Men</Link></li>
-                <li><Link to="/products" className="hover:text-gray-900">Women</Link></li>
               </ul>
             </div>
             
@@ -118,8 +115,6 @@ const Index = () => {
             <div>
               <h3 className="font-medium text-gray-900 mb-4">Company</h3>
               <ul className="space-y-2 text-gray-600">
-                <li><a href="#" className="hover:text-gray-900">About</a></li>
-                <li><a href="#" className="hover:text-gray-900">Journal</a></li>
                 <li><a href="#" className="hover:text-gray-900">Contact</a></li>
               </ul>
             </div>

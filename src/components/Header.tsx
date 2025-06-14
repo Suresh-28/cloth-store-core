@@ -47,12 +47,6 @@ const Header = () => {
             <Link to="/products" className="text-gray-700 hover:text-gray-900 font-medium">
               Shop
             </Link>
-            <Link to="/products" className="text-gray-700 hover:text-gray-900 font-medium">
-              Journal
-            </Link>
-            <Link to="/products" className="text-gray-700 hover:text-gray-900 font-medium">
-              About
-            </Link>
           </nav>
 
           {/* Right side icons */}
@@ -114,20 +108,6 @@ const Header = () => {
                 onClick={() => setIsMenuOpen(false)}
               >
                 Shop
-              </Link>
-              <Link 
-                to="/products" 
-                className="text-gray-700 hover:text-gray-900 font-medium"
-                onClick={() => setIsMenuOpen(false)}
-              >
-                Journal
-              </Link>
-              <Link 
-                to="/products" 
-                className="text-gray-700 hover:text-gray-900 font-medium"
-                onClick={() => setIsMenuOpen(false)}
-              >
-                About
               </Link>
             </nav>
           </div>
