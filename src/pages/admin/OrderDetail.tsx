@@ -16,7 +16,7 @@ const OrderDetail = () => {
       email: 'john@example.com',
       phone: '+44 123 456 7890'
     },
-    shipping: {
+    shippingAddress: {
       address: '123 Main Street',
       city: 'London',
       postalCode: 'SW1A 1AA',
@@ -37,7 +37,7 @@ const OrderDetail = () => {
     date: '2024-01-15',
     tracking: 'TR123456789GB',
     subtotal: 75,
-    shipping: 0,
+    shippingCost: 0,
     tax: 15,
     total: 90
   };
@@ -170,9 +170,9 @@ const OrderDetail = () => {
               </CardHeader>
               <CardContent>
                 <div className="space-y-1">
-                  <p>{order.shipping.address}</p>
-                  <p>{order.shipping.city} {order.shipping.postalCode}</p>
-                  <p>{order.shipping.country}</p>
+                  <p>{order.shippingAddress.address}</p>
+                  <p>{order.shippingAddress.city} {order.shippingAddress.postalCode}</p>
+                  <p>{order.shippingAddress.country}</p>
                 </div>
               </CardContent>
             </Card>
@@ -190,7 +190,7 @@ const OrderDetail = () => {
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-600">Shipping</span>
-                    <span>£{order.shipping}</span>
+                    <span>£{order.shippingCost}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-600">Tax</span>
