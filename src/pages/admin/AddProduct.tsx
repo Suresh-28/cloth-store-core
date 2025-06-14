@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from '@/hooks/use-toast';
+import { Product } from '@/data/products';
 
 const AddProduct = () => {
   const navigate = useNavigate();
@@ -16,73 +17,182 @@ const AddProduct = () => {
     description: '',
     price: '',
     originalPrice: '',
-    category: 'all',
-    sizes: ['S', 'M', 'L'],
-    colors: [{ name: 'Black', value: '#000000' }],
-    features: ['']
+    category: 'all' as 'men' | 'women' | 'all',
+    sizes: ['S', 'M', 'L'] as string[],
+    colors: [{ name: 'Black', value: '#000000' }] as { name: string; value: string }[],
+    features: [''] as string[]
   });
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value
-    });
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+    
+    // Clear error when user starts typing
+    if (errors[name]) {
+      setErrors(prev => ({ ...prev, [name]: '' }));
+    }
   };
 
   const handleSizeToggle = (size: string) => {
-    setFormData({
-      ...formData,
-      sizes: formData.sizes.includes(size)
-        ? formData.sizes.filter(s => s !== size)
-        : [...formData.sizes, size]
-    });
+    setFormData(prev => ({
+      ...prev,
+      sizes: prev.sizes.includes(size)
+        ? prev.sizes.filter(s => s !== size)
+        : [...prev.sizes, size]
+    }));
   };
 
   const handleColorAdd = () => {
-    setFormData({
-      ...formData,
-      colors: [...formData.colors, { name: '', value: '#000000' }]
-    });
+    setFormData(prev => ({
+      ...prev,
+      colors: [...prev.colors, { name: '', value: '#000000' }]
+    }));
   };
 
   const handleColorRemove = (index: number) => {
-    setFormData({
-      ...formData,
-      colors: formData.colors.filter((_, i) => i !== index)
-    });
+    if (formData.colors.length > 1) {
+      setFormData(prev => ({
+        ...prev,
+        colors: prev.colors.filter((_, i) => i !== index)
+      }));
+    }
   };
 
   const handleColorChange = (index: number, field: 'name' | 'value', value: string) => {
-    const newColors = [...formData.colors];
-    newColors[index][field] = value;
-    setFormData({ ...formData, colors: newColors });
+    setFormData(prev => ({
+      ...prev,
+      colors: prev.colors.map((color, i) => 
+        i === index ? { ...color, [field]: value } : color
+      )
+    }));
   };
 
   const handleFeatureAdd = () => {
-    setFormData({
-      ...formData,
-      features: [...formData.features, '']
-    });
+    setFormData(prev => ({
+      ...prev,
+      features: [...prev.features, '']
+    }));
   };
 
   const handleFeatureRemove = (index: number) => {
-    setFormData({
-      ...formData,
-      features: formData.features.filter((_, i) => i !== index)
-    });
+    if (formData.features.length > 1) {
+      setFormData(prev => ({
+        ...prev,
+        features: prev.features.filter((_, i) => i !== index)
+      }));
+    }
   };
 
   const handleFeatureChange = (index: number, value: string) => {
-    const newFeatures = [...formData.features];
-    newFeatures[index] = value;
-    setFormData({ ...formData, features: newFeatures });
+    setFormData(prev => ({
+      ...prev,
+      features: prev.features.map((feature, i) => 
+        i === index ? value : feature
+      )
+    }));
+  };
+
+  const validateForm = () => {
+    const newErrors: Record<string, string> = {};
+
+    if (!formData.name.trim()) {
+      newErrors.name = 'Product name is required';
+    }
+
+    if (!formData.description.trim()) {
+      newErrors.description = 'Product description is required';
+    }
+
+    if (!formData.price || parseFloat(formData.price) <= 0) {
+      newErrors.price = 'Valid price is required';
+    }
+
+    if (formData.originalPrice && parseFloat(formData.originalPrice) <= parseFloat(formData.price)) {
+      newErrors.originalPrice = 'Original price must be higher than current price';
+    }
+
+    if (formData.sizes.length === 0) {
+      newErrors.sizes = 'At least one size must be selected';
+    }
+
+    if (formData.colors.some(color => !color.name.trim())) {
+      newErrors.colors = 'All colors must have names';
+    }
+
+    if (formData.features.some(feature => !feature.trim()) && formData.features.length > 1) {
+      newErrors.features = 'Remove empty features or fill them in';
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const generateProductId = () => {
+    return Date.now().toString();
+  };
+
+  const createProduct = (): Product => {
+    const price = parseFloat(formData.price);
+    const originalPrice = formData.originalPrice ? parseFloat(formData.originalPrice) : undefined;
+    
+    return {
+      id: generateProductId(),
+      name: formData.name,
+      description: formData.description,
+      price,
+      originalPrice,
+      discount: originalPrice ? Math.round(((originalPrice - price) / originalPrice) * 100) : undefined,
+      image: 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=500&h=500&fit=crop',
+      images: [
+        'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=500&h=500&fit=crop',
+        'https://images.unsplash.com/photo-1503341504253-dff4815485f1?w=500&h=500&fit=crop'
+      ],
+      rating: 0,
+      reviewCount: 0,
+      colors: formData.colors.filter(color => color.name.trim()),
+      sizes: formData.sizes,
+      features: formData.features.filter(feature => feature.trim()),
+      category: formData.category,
+      isNew: true
+    };
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // Handle product creation
-    toast({ title: "Product added successfully!" });
-    navigate('/admin/products');
+    
+    if (!validateForm()) {
+      toast({
+        title: "Validation Error",
+        description: "Please fix the errors in the form",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      const newProduct = createProduct();
+      
+      // In a real app, this would make an API call
+      // For now, we'll just simulate success
+      console.log('New product created:', newProduct);
+      
+      toast({
+        title: "Success!",
+        description: "Product has been added successfully"
+      });
+      
+      navigate('/admin/products');
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to add product. Please try again.",
+        variant: "destructive"
+      });
+    }
   };
 
   const availableSizes = ['XS', 'S', 'M', 'L', 'XL', 'XXL'];
@@ -93,7 +203,7 @@ const AddProduct = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center space-x-4">
-              <Link to="/admin/products" className="flex items-center space-x-2">
+              <Link to="/admin/products" className="flex items-center space-x-2 hover:text-gray-600">
                 <ArrowLeft size={20} />
                 <span>Back to Products</span>
               </Link>
@@ -114,28 +224,30 @@ const AddProduct = () => {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div>
-                  <Label htmlFor="name">Product Name</Label>
+                  <Label htmlFor="name">Product Name *</Label>
                   <Input
                     id="name"
                     name="name"
-                    required
                     value={formData.name}
                     onChange={handleInputChange}
                     placeholder="Enter product name"
+                    className={errors.name ? "border-red-500" : ""}
                   />
+                  {errors.name && <p className="text-red-500 text-sm mt-1">{errors.name}</p>}
                 </div>
 
                 <div>
-                  <Label htmlFor="description">Description</Label>
+                  <Label htmlFor="description">Description *</Label>
                   <Textarea
                     id="description"
                     name="description"
-                    required
                     value={formData.description}
                     onChange={handleInputChange}
                     placeholder="Enter product description"
                     rows={4}
+                    className={errors.description ? "border-red-500" : ""}
                   />
+                  {errors.description && <p className="text-red-500 text-sm mt-1">{errors.description}</p>}
                 </div>
 
                 <div>
@@ -162,16 +274,19 @@ const AddProduct = () => {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div>
-                  <Label htmlFor="price">Price (£)</Label>
+                  <Label htmlFor="price">Price (£) *</Label>
                   <Input
                     id="price"
                     name="price"
                     type="number"
-                    required
+                    step="0.01"
+                    min="0"
                     value={formData.price}
                     onChange={handleInputChange}
                     placeholder="0.00"
+                    className={errors.price ? "border-red-500" : ""}
                   />
+                  {errors.price && <p className="text-red-500 text-sm mt-1">{errors.price}</p>}
                 </div>
 
                 <div>
@@ -180,10 +295,17 @@ const AddProduct = () => {
                     id="originalPrice"
                     name="originalPrice"
                     type="number"
+                    step="0.01"
+                    min="0"
                     value={formData.originalPrice}
                     onChange={handleInputChange}
                     placeholder="0.00"
+                    className={errors.originalPrice ? "border-red-500" : ""}
                   />
+                  {errors.originalPrice && <p className="text-red-500 text-sm mt-1">{errors.originalPrice}</p>}
+                  <p className="text-sm text-gray-600 mt-1">
+                    Leave empty if no discount. Must be higher than regular price.
+                  </p>
                 </div>
               </CardContent>
             </Card>
@@ -197,11 +319,8 @@ const AddProduct = () => {
             <CardContent>
               <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
                 <Upload className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-                <p className="text-gray-600">Click to upload images or drag and drop</p>
-                <p className="text-sm text-gray-500 mt-2">PNG, JPG, GIF up to 10MB</p>
-                <Button type="button" variant="outline" className="mt-4">
-                  Choose Files
-                </Button>
+                <p className="text-gray-600">Placeholder image will be used for demo</p>
+                <p className="text-sm text-gray-500 mt-2">In production, implement file upload here</p>
               </div>
             </CardContent>
           </Card>
@@ -209,7 +328,7 @@ const AddProduct = () => {
           {/* Sizes */}
           <Card>
             <CardHeader>
-              <CardTitle>Available Sizes</CardTitle>
+              <CardTitle>Available Sizes *</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="flex flex-wrap gap-2">
@@ -225,6 +344,7 @@ const AddProduct = () => {
                   </Button>
                 ))}
               </div>
+              {errors.sizes && <p className="text-red-500 text-sm mt-2">{errors.sizes}</p>}
             </CardContent>
           </Card>
 
@@ -247,7 +367,7 @@ const AddProduct = () => {
                     type="color"
                     value={color.value}
                     onChange={(e) => handleColorChange(index, 'value', e.target.value)}
-                    className="w-12 h-10 rounded-md border border-gray-300"
+                    className="w-12 h-10 rounded-md border border-gray-300 cursor-pointer"
                   />
                   {formData.colors.length > 1 && (
                     <Button
@@ -264,6 +384,7 @@ const AddProduct = () => {
               <Button type="button" variant="outline" onClick={handleColorAdd}>
                 Add Color
               </Button>
+              {errors.colors && <p className="text-red-500 text-sm mt-2">{errors.colors}</p>}
             </CardContent>
           </Card>
 
@@ -296,6 +417,7 @@ const AddProduct = () => {
               <Button type="button" variant="outline" onClick={handleFeatureAdd}>
                 Add Feature
               </Button>
+              {errors.features && <p className="text-red-500 text-sm mt-2">{errors.features}</p>}
             </CardContent>
           </Card>
 
