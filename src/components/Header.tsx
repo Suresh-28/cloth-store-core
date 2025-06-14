@@ -1,16 +1,40 @@
 
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Menu, User, Heart, ShoppingBag, X } from 'lucide-react';
+import { Menu, User, Heart, ShoppingBag, X, LogIn, UserCircle, Settings, LogOut } from 'lucide-react';
 import { useCart } from '@/contexts/CartContext';
 import { useWishlist } from '@/contexts/WishlistContext';
 import { Button } from '@/components/ui/button';
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const { getTotalItems } = useCart();
   const { items: wishlistItems } = useWishlist();
   const navigate = useNavigate();
+
+  const handleUserAction = (action: string) => {
+    setIsUserMenuOpen(false);
+    // Handle different user actions
+    switch (action) {
+      case 'login':
+        console.log('Login clicked');
+        // Navigate to login page or open login modal
+        break;
+      case 'profile':
+        console.log('Profile clicked');
+        // Navigate to profile page
+        break;
+      case 'settings':
+        console.log('Settings clicked');
+        // Navigate to settings page
+        break;
+      case 'logout':
+        console.log('Logout clicked');
+        // Handle logout
+        break;
+    }
+  };
 
   return (
     <header className="bg-white border-b border-gray-200 sticky top-0 z-50">
@@ -40,9 +64,53 @@ const Header = () => {
 
           {/* Right side icons */}
           <div className="flex items-center space-x-4">
-            <Button variant="ghost" size="sm">
-              <User size={20} />
-            </Button>
+            <div className="relative">
+              <Button 
+                variant="ghost" 
+                size="sm"
+                onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+              >
+                <User size={20} />
+              </Button>
+              
+              {/* User Dropdown Menu */}
+              {isUserMenuOpen && (
+                <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-md shadow-lg z-50">
+                  <div className="py-1">
+                    <button
+                      onClick={() => handleUserAction('login')}
+                      className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left"
+                    >
+                      <LogIn size={16} className="mr-2" />
+                      Sign In
+                    </button>
+                    <button
+                      onClick={() => handleUserAction('profile')}
+                      className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left"
+                    >
+                      <UserCircle size={16} className="mr-2" />
+                      Profile
+                    </button>
+                    <button
+                      onClick={() => handleUserAction('settings')}
+                      className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left"
+                    >
+                      <Settings size={16} className="mr-2" />
+                      Settings
+                    </button>
+                    <div className="border-t border-gray-100"></div>
+                    <button
+                      onClick={() => handleUserAction('logout')}
+                      className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left"
+                    >
+                      <LogOut size={16} className="mr-2" />
+                      Sign Out
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+            
             <Link to="/wishlist">
               <Button variant="ghost" size="sm" className="relative">
                 <Heart size={20} />
@@ -74,6 +142,14 @@ const Header = () => {
           </div>
         )}
       </div>
+      
+      {/* Overlay to close user menu when clicking outside */}
+      {isUserMenuOpen && (
+        <div 
+          className="fixed inset-0 z-40" 
+          onClick={() => setIsUserMenuOpen(false)}
+        ></div>
+      )}
     </header>
   );
 };
