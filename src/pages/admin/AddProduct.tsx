@@ -7,7 +7,6 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from '@/hooks/use-toast';
-import { Product } from '@/data/products';
 import { useProducts } from '@/contexts/ProductsContext';
 
 const AddProduct = () => {
@@ -19,14 +18,14 @@ const AddProduct = () => {
     description: '',
     price: '',
     originalPrice: '',
-    category: 'all' as 'men' | 'women' | 'all',
+    category: 'men' as 'men' | 'women',
     sizes: ['S', 'M', 'L'] as string[],
-    colors: [{ name: 'Black', value: '#000000' }] as { name: string; value: string }[],
+    colors: ['Black'] as string[],
     features: [''] as string[],
     images: [] as string[]
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
+  const [uploading, setUploading] = useState(false);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -35,7 +34,6 @@ const AddProduct = () => {
       [name]: value
     }));
     
-    // Clear error when user starts typing
     if (errors[name]) {
       setErrors(prev => ({ ...prev, [name]: '' }));
     }
@@ -53,13 +51,11 @@ const AddProduct = () => {
             ...prev,
             images: [...prev.images, imageUrl]
           }));
-          setUploadedFiles(prev => [...prev, file]);
         };
         reader.readAsDataURL(file);
       }
     });
     
-    // Clear the input
     e.target.value = '';
   };
 
@@ -68,7 +64,6 @@ const AddProduct = () => {
       ...prev,
       images: prev.images.filter((_, i) => i !== index)
     }));
-    setUploadedFiles(prev => prev.filter((_, i) => i !== index));
   };
 
   const handleSizeToggle = (size: string) => {
@@ -83,7 +78,7 @@ const AddProduct = () => {
   const handleColorAdd = () => {
     setFormData(prev => ({
       ...prev,
-      colors: [...prev.colors, { name: '', value: '#000000' }]
+      colors: [...prev.colors, '']
     }));
   };
 
@@ -96,11 +91,11 @@ const AddProduct = () => {
     }
   };
 
-  const handleColorChange = (index: number, field: 'name' | 'value', value: string) => {
+  const handleColorChange = (index: number, value: string) => {
     setFormData(prev => ({
       ...prev,
       colors: prev.colors.map((color, i) => 
-        i === index ? { ...color, [field]: value } : color
+        i === index ? value : color
       )
     }));
   };
@@ -153,7 +148,7 @@ const AddProduct = () => {
       newErrors.sizes = 'At least one size must be selected';
     }
 
-    if (formData.colors.some(color => !color.name.trim())) {
+    if (formData.colors.some(color => !color.trim())) {
       newErrors.colors = 'All colors must have names';
     }
 
@@ -169,37 +164,7 @@ const AddProduct = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const generateProductId = () => {
-    return Date.now().toString();
-  };
-
-  const createProduct = (): Product => {
-    const price = parseFloat(formData.price);
-    const originalPrice = formData.originalPrice ? parseFloat(formData.originalPrice) : undefined;
-    
-    return {
-      id: generateProductId(),
-      name: formData.name,
-      description: formData.description,
-      price,
-      originalPrice,
-      discount: originalPrice ? Math.round(((originalPrice - price) / originalPrice) * 100) : undefined,
-      image: formData.images[0] || 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=500&h=500&fit=crop',
-      images: formData.images.length > 0 ? formData.images : [
-        'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=500&h=500&fit=crop',
-        'https://images.unsplash.com/photo-1503341504253-dff4815485f1?w=500&h=500&fit=crop'
-      ],
-      rating: 0,
-      reviewCount: 0,
-      colors: formData.colors.filter(color => color.name.trim()),
-      sizes: formData.sizes,
-      features: formData.features.filter(feature => feature.trim()),
-      category: formData.category,
-      isNew: true
-    };
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!validateForm()) {
@@ -211,26 +176,50 @@ const AddProduct = () => {
       return;
     }
 
+    setUploading(true);
+
     try {
-      const newProduct = createProduct();
+      const price = parseFloat(formData.price);
+      const originalPrice = formData.originalPrice ? parseFloat(formData.originalPrice) : undefined;
       
-      // Add the product to the global state
-      addProduct(newProduct);
+      const productData = {
+        name: formData.name,
+        description: formData.description,
+        price,
+        originalPrice,
+        discount: originalPrice ? Math.round(((originalPrice - price) / originalPrice) * 100) : undefined,
+        images: formData.images.length > 0 ? formData.images : [
+          'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=500&h=500&fit=crop'
+        ],
+        rating: 0,
+        reviewCount: 0,
+        colors: formData.colors.filter(color => color.trim()),
+        sizes: formData.sizes,
+        features: formData.features.filter(feature => feature.trim()),
+        category: formData.category,
+        isNew: true,
+        stock_quantity: 10 // Default stock
+      };
+
+      console.log('Submitting product:', productData);
       
-      console.log('New product added:', newProduct);
+      await addProduct(productData);
       
       toast({
         title: "Success!",
-        description: "Product has been added successfully and will appear on the products page"
+        description: "Product has been added successfully"
       });
       
       navigate('/admin/products');
     } catch (error) {
+      console.error('Error adding product:', error);
       toast({
         title: "Error",
         description: "Failed to add product. Please try again.",
         variant: "destructive"
       });
+    } finally {
+      setUploading(false);
     }
   };
 
@@ -256,7 +245,6 @@ const AddProduct = () => {
 
         <form onSubmit={handleSubmit} className="space-y-8">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            {/* Basic Information */}
             <Card>
               <CardHeader>
                 <CardTitle>Basic Information</CardTitle>
@@ -298,7 +286,6 @@ const AddProduct = () => {
                     onChange={handleInputChange}
                     className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-black"
                   >
-                    <option value="all">All</option>
                     <option value="men">Men</option>
                     <option value="women">Women</option>
                   </select>
@@ -306,7 +293,6 @@ const AddProduct = () => {
               </CardContent>
             </Card>
 
-            {/* Pricing */}
             <Card>
               <CardHeader>
                 <CardTitle>Pricing</CardTitle>
@@ -342,15 +328,11 @@ const AddProduct = () => {
                     className={errors.originalPrice ? "border-red-500" : ""}
                   />
                   {errors.originalPrice && <p className="text-red-500 text-sm mt-1">{errors.originalPrice}</p>}
-                  <p className="text-sm text-gray-600 mt-1">
-                    Leave empty if no discount. Must be higher than regular price.
-                  </p>
                 </div>
               </CardContent>
             </Card>
           </div>
 
-          {/* Images */}
           <Card>
             <CardHeader>
               <CardTitle>Product Images *</CardTitle>
@@ -375,10 +357,8 @@ const AddProduct = () => {
                   <Plus className="w-4 h-4 mr-2" />
                   Add Images
                 </Button>
-                <p className="text-sm text-gray-500 mt-2">PNG, JPG, GIF up to 10MB each</p>
               </div>
               
-              {/* Image Preview */}
               {formData.images.length > 0 && (
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
                   {formData.images.map((image, index) => (
@@ -411,7 +391,6 @@ const AddProduct = () => {
             </CardContent>
           </Card>
 
-          {/* Sizes */}
           <Card>
             <CardHeader>
               <CardTitle>Available Sizes *</CardTitle>
@@ -434,7 +413,6 @@ const AddProduct = () => {
             </CardContent>
           </Card>
 
-          {/* Colors */}
           <Card>
             <CardHeader>
               <CardTitle>Colors</CardTitle>
@@ -442,18 +420,11 @@ const AddProduct = () => {
             <CardContent className="space-y-4">
               {formData.colors.map((color, index) => (
                 <div key={index} className="flex items-center space-x-4">
-                  <div className="flex-1">
-                    <Input
-                      placeholder="Color name"
-                      value={color.name}
-                      onChange={(e) => handleColorChange(index, 'name', e.target.value)}
-                    />
-                  </div>
-                  <input
-                    type="color"
-                    value={color.value}
-                    onChange={(e) => handleColorChange(index, 'value', e.target.value)}
-                    className="w-12 h-10 rounded-md border border-gray-300 cursor-pointer"
+                  <Input
+                    placeholder="Color name"
+                    value={color}
+                    onChange={(e) => handleColorChange(index, e.target.value)}
+                    className="flex-1"
                   />
                   {formData.colors.length > 1 && (
                     <Button
@@ -474,7 +445,6 @@ const AddProduct = () => {
             </CardContent>
           </Card>
 
-          {/* Features */}
           <Card>
             <CardHeader>
               <CardTitle>Product Features</CardTitle>
@@ -513,8 +483,12 @@ const AddProduct = () => {
                 Cancel
               </Button>
             </Link>
-            <Button type="submit" className="bg-black hover:bg-gray-800 text-white">
-              Add Product
+            <Button 
+              type="submit" 
+              className="bg-black hover:bg-gray-800 text-white"
+              disabled={uploading}
+            >
+              {uploading ? 'Adding Product...' : 'Add Product'}
             </Button>
           </div>
         </form>

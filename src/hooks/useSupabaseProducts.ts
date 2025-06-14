@@ -46,6 +46,24 @@ export const useSupabaseProducts = () => {
     isNew: supabaseProduct.is_new
   });
 
+  const convertProductToSupabase = (product: any): Omit<SupabaseProduct, 'id' | 'created_at' | 'updated_at'> => ({
+    name: product.name,
+    description: product.description || '',
+    price: Number(product.price),
+    original_price: product.originalPrice ? Number(product.originalPrice) : null,
+    category: product.category === 'all' ? 'men' : product.category,
+    sizes: product.sizes || [],
+    colors: product.colors?.map((c: any) => typeof c === 'string' ? c : c.name) || [],
+    images: product.images || [],
+    stock_quantity: product.stock_quantity || 0,
+    is_active: true,
+    rating: Number(product.rating) || 0,
+    review_count: product.reviewCount || 0,
+    features: product.features || [],
+    discount: product.discount || null,
+    is_new: product.isNew || false
+  });
+
   const fetchProducts = async () => {
     try {
       setLoading(true);
@@ -69,11 +87,15 @@ export const useSupabaseProducts = () => {
     }
   };
 
-  const addProduct = async (product: Omit<SupabaseProduct, 'id' | 'created_at' | 'updated_at'>) => {
+  const addProduct = async (product: any) => {
     try {
+      console.log('Adding product:', product);
+      const supabaseProduct = convertProductToSupabase(product);
+      console.log('Converted to Supabase format:', supabaseProduct);
+      
       const { data, error } = await supabase
         .from('products')
-        .insert([product])
+        .insert([supabaseProduct])
         .select()
         .single();
 
@@ -85,6 +107,7 @@ export const useSupabaseProducts = () => {
       if (data) {
         const newProduct = convertSupabaseToProduct(data);
         setProducts(prev => [newProduct, ...prev]);
+        await fetchProducts(); // Refresh the list
         return newProduct;
       }
     } catch (error) {
@@ -93,11 +116,13 @@ export const useSupabaseProducts = () => {
     }
   };
 
-  const updateProduct = async (id: string, updates: Partial<SupabaseProduct>) => {
+  const updateProduct = async (id: string, updates: any) => {
     try {
+      const supabaseUpdates = convertProductToSupabase(updates);
+      
       const { data, error } = await supabase
         .from('products')
-        .update(updates)
+        .update(supabaseUpdates)
         .eq('id', id)
         .select()
         .single();
