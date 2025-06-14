@@ -1,8 +1,8 @@
-
 import { useState } from 'react';
 import { Package, Clock, CheckCircle, Truck } from 'lucide-react';
 import Header from '@/components/Header';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Progress } from '@/components/ui/progress';
 
 interface OrderItem {
   id: string;
@@ -107,6 +107,26 @@ const Orders = () => {
     }
   };
 
+  const getStatusProgress = (status: string) => {
+    switch (status) {
+      case 'pending': return 25;
+      case 'processing': return 50;
+      case 'shipped': return 75;
+      case 'delivered': return 100;
+      default: return 0;
+    }
+  };
+
+  const getTrackingSteps = (status: string) => {
+    const steps = [
+      { label: 'Order Placed', status: 'pending', completed: true },
+      { label: 'Processing', status: 'processing', completed: ['processing', 'shipped', 'delivered'].includes(status) },
+      { label: 'Shipped', status: 'shipped', completed: ['shipped', 'delivered'].includes(status) },
+      { label: 'Delivered', status: 'delivered', completed: status === 'delivered' }
+    ];
+    return steps;
+  };
+
   return (
     <div className="min-h-screen bg-white">
       <Header />
@@ -139,6 +159,41 @@ const Orders = () => {
                   </div>
                 </CardHeader>
                 <CardContent className="p-6">
+                  {/* Track Status Section */}
+                  <div className="mb-6 p-4 bg-gray-50 rounded-lg">
+                    <h3 className="text-lg font-medium text-gray-900 mb-4">Track Your Order</h3>
+                    
+                    {/* Progress Bar */}
+                    <div className="mb-4">
+                      <Progress value={getStatusProgress(order.status)} className="h-2" />
+                      <p className="text-sm text-gray-600 mt-2">{getStatusProgress(order.status)}% Complete</p>
+                    </div>
+
+                    {/* Tracking Steps */}
+                    <div className="flex justify-between items-center">
+                      {getTrackingSteps(order.status).map((step, index) => (
+                        <div key={index} className="flex flex-col items-center text-center flex-1">
+                          <div className={`w-8 h-8 rounded-full flex items-center justify-center mb-2 ${
+                            step.completed 
+                              ? 'bg-green-100 text-green-600' 
+                              : 'bg-gray-100 text-gray-400'
+                          }`}>
+                            {step.completed ? (
+                              <CheckCircle className="w-4 h-4" />
+                            ) : (
+                              <Clock className="w-4 h-4" />
+                            )}
+                          </div>
+                          <span className={`text-xs font-medium ${
+                            step.completed ? 'text-green-600' : 'text-gray-400'
+                          }`}>
+                            {step.label}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
                   <div className="space-y-4">
                     {order.items.map((item, index) => (
                       <div key={index} className="flex space-x-4">
