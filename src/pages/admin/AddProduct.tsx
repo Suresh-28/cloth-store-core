@@ -74,7 +74,7 @@ const AddProduct = () => {
 
   const handleColorAdd = () => {
     const currentColors = getValues('colors');
-    setValue('colors', [...currentColors, { name: '', value: '#000000' }] as { name: string; value: string }[]);
+    setValue('colors', [...currentColors, { name: '', value: '#000000' }]);
   };
 
   const handleColorRemove = (index: number) => {
@@ -86,9 +86,16 @@ const AddProduct = () => {
 
   const handleColorChange = (index: number, field: 'name' | 'value', value: string) => {
     const currentColors = getValues('colors');
-    const newColors = [...currentColors];
-    newColors[index] = { ...newColors[index], [field]: value };
-    setValue('colors', newColors as { name: string; value: string }[]);
+    const newColors = currentColors.map((color, i) => {
+      if (i === index) {
+        return {
+          name: field === 'name' ? value : color.name,
+          value: field === 'value' ? value : color.value
+        };
+      }
+      return color;
+    });
+    setValue('colors', newColors);
   };
 
   const handleFeatureAdd = () => {
