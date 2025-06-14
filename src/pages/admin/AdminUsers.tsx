@@ -1,17 +1,18 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Search, Mail, Phone, Calendar, MoreHorizontal } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { supabase } from '@/integrations/supabase/client';
 
 interface User {
   id: string;
-  name: string;
+  full_name: string | null;
   email: string;
-  phone: string;
-  joinDate: string;
+  phone: string | null;
+  created_at: string;
   orders: number;
   totalSpent: number;
   status: 'active' | 'inactive';
@@ -19,55 +20,113 @@ interface User {
 
 const AdminUsers = () => {
   const [searchTerm, setSearchTerm] = useState('');
+  const [users, setUsers] = useState<User[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  // Mock users data
-  const users: User[] = [
-    {
-      id: '1',
-      name: 'John Doe',
-      email: 'john@example.com',
-      phone: '+44 123 456 7890',
-      joinDate: '2023-12-15',
-      orders: 3,
-      totalSpent: 225,
-      status: 'active'
-    },
-    {
-      id: '2',
-      name: 'Jane Smith',
-      email: 'jane@example.com',
-      phone: '+44 987 654 3210',
-      joinDate: '2023-11-20',
-      orders: 5,
-      totalSpent: 375,
-      status: 'active'
-    },
-    {
-      id: '3',
-      name: 'Mike Johnson',
-      email: 'mike@example.com',
-      phone: '+44 555 123 4567',
-      joinDate: '2023-10-10',
-      orders: 1,
-      totalSpent: 75,
-      status: 'active'
-    },
-    {
-      id: '4',
-      name: 'Sarah Wilson',
-      email: 'sarah@example.com',
-      phone: '+44 777 888 9999',
-      joinDate: '2023-09-05',
-      orders: 0,
-      totalSpent: 0,
-      status: 'inactive'
+  const fetchUsers = async () => {
+    try {
+      // Fetch profiles data
+      const { data: profiles, error: profilesError } = await supabase
+        .from('profiles')
+        .select('*');
+
+      if (profilesError) {
+        console.error('Error fetching profiles:', profilesError);
+        return;
+      }
+
+      // Fetch order counts and total spending for each user
+      const usersWithStats = await Promise.all(
+        (profiles || []).map(async (profile) => {
+          // Get order count and total spent
+          const { data: orders } = await supabase
+            .from('orders')
+            .select('total_amount')
+            .eq('user_id', profile.id);
+
+          const orderCount = orders?.length || 0;
+          const totalSpent = orders?.reduce((sum, order) => sum + Number(order.total_amount), 0) || 0;
+
+          return {
+            id: profile.id,
+            full_name: profile.full_name,
+            email: profile.email,
+            phone: profile.phone,
+            created_at: profile.created_at,
+            orders: orderCount,
+            totalSpent: totalSpent,
+            status: 'active' as const
+          };
+        })
+      );
+
+      setUsers(usersWithStats);
+    } catch (error) {
+      console.error('Error fetching users:', error);
+    } finally {
+      setLoading(false);
     }
-  ];
+  };
+
+  useEffect(() => {
+    fetchUsers();
+
+    // Set up real-time subscription for profiles
+    const profilesChannel = supabase
+      .channel('profiles-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'profiles'
+        },
+        () => {
+          console.log('Profiles updated, refetching data...');
+          fetchUsers();
+        }
+      )
+      .subscribe();
+
+    // Set up real-time subscription for orders (to update stats)
+    const ordersChannel = supabase
+      .channel('orders-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'orders'
+        },
+        () => {
+          console.log('Orders updated, refetching data...');
+          fetchUsers();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(profilesChannel);
+      supabase.removeChannel(ordersChannel);
+    };
+  }, []);
 
   const filteredUsers = users.filter(user => 
-    user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    user.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     user.email.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('en-GB');
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <p className="text-gray-600">Loading users...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -90,7 +149,7 @@ const AdminUsers = () => {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-4">Users</h1>
+          <h1 className="text-3xl font-bold text-gray-900 mb-4">Users ({users.length})</h1>
           
           <div className="relative max-w-md">
             <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
@@ -108,7 +167,9 @@ const AdminUsers = () => {
             <Card key={user.id} className="hover:shadow-md transition-shadow">
               <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-2">
                 <div className="space-y-1">
-                  <CardTitle className="text-lg">{user.name}</CardTitle>
+                  <CardTitle className="text-lg">
+                    {user.full_name || 'Unknown User'}
+                  </CardTitle>
                   <div className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${
                     user.status === 'active' 
                       ? 'bg-green-100 text-green-800' 
@@ -127,13 +188,15 @@ const AdminUsers = () => {
                     <Mail size={14} />
                     <span>{user.email}</span>
                   </div>
-                  <div className="flex items-center space-x-2 text-sm text-gray-600">
-                    <Phone size={14} />
-                    <span>{user.phone}</span>
-                  </div>
+                  {user.phone && (
+                    <div className="flex items-center space-x-2 text-sm text-gray-600">
+                      <Phone size={14} />
+                      <span>{user.phone}</span>
+                    </div>
+                  )}
                   <div className="flex items-center space-x-2 text-sm text-gray-600">
                     <Calendar size={14} />
-                    <span>Joined {user.joinDate}</span>
+                    <span>Joined {formatDate(user.created_at)}</span>
                   </div>
                 </div>
                 
@@ -143,7 +206,7 @@ const AdminUsers = () => {
                     <p className="text-xs text-gray-600">Orders</p>
                   </div>
                   <div className="text-center">
-                    <p className="text-2xl font-bold text-gray-900">£{user.totalSpent}</p>
+                    <p className="text-2xl font-bold text-gray-900">£{user.totalSpent.toFixed(2)}</p>
                     <p className="text-xs text-gray-600">Spent</p>
                   </div>
                 </div>
@@ -152,9 +215,11 @@ const AdminUsers = () => {
           ))}
         </div>
 
-        {filteredUsers.length === 0 && (
+        {filteredUsers.length === 0 && !loading && (
           <div className="text-center py-12">
-            <p className="text-gray-600">No users found matching your search.</p>
+            <p className="text-gray-600">
+              {users.length === 0 ? 'No users found.' : 'No users found matching your search.'}
+            </p>
           </div>
         )}
       </div>
