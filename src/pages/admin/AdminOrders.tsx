@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Eye, Search } from 'lucide-react';
@@ -31,8 +30,8 @@ const AdminOrders = () => {
   }, [orders]);
 
   const filteredOrders = orders.filter(order => 
-    (order.customer.toLowerCase().includes(searchTerm.toLowerCase()) ||
-     order.id.includes(searchTerm)) &&
+    (order.customer?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+     order.id?.toLowerCase().includes(searchTerm.toLowerCase())) &&
     (selectedStatus === 'all' || order.status === selectedStatus)
   );
 

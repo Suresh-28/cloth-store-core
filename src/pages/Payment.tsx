@@ -12,17 +12,16 @@ import { toast } from '@/hooks/use-toast';
 
 const Payment = () => {
   const { items, getTotalPrice, clearCart } = useCart();
-  const { addOrder, orders } = useOrders();
+  const { addOrder } = useOrders();
   const navigate = useNavigate();
   const [isProcessing, setIsProcessing] = useState(false);
   const [paymentData, setPaymentData] = useState({
     cardNumber: '',
     expiryDate: '',
     cvv: '',
-    nameOnCard: ''
+    nameOnCard: '',
+    email: 'customer@example.com'
   });
-
-  console.log('Payment - Current orders before payment:', orders);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setPaymentData({
@@ -48,29 +47,36 @@ const Payment = () => {
         price: item.price
       }));
 
+      const subtotal = getTotalPrice();
+      const tax = subtotal * 0.2;
+      const totalWithTax = subtotal + tax;
+
       const newOrder: Order = {
-        id: Math.random().toString(36).substr(2, 9),
+        id: Math.random().toString(36).substr(2, 9).toUpperCase(),
         date: new Date().toLocaleDateString('en-GB'),
         status: 'pending',
         total: totalWithTax,
         items: orderItems,
         customer: paymentData.nameOnCard || 'Customer',
-        email: 'customer@example.com',
-        subtotal: getTotalPrice(),
+        email: paymentData.email,
+        subtotal: subtotal,
         shippingCost: 0,
-        tax: getTotalPrice() * 0.2
+        tax: tax
       };
 
-      console.log('Payment - Adding new order:', newOrder);
+      console.log('Payment - Creating new order:', newOrder);
       
       // Add order to context
       addOrder(newOrder);
       
-      console.log('Payment - Orders after adding:', orders);
-      
       setIsProcessing(false);
       clearCart();
-      toast({ title: "Payment successful!", description: "Your order has been placed." });
+      
+      toast({ 
+        title: "Payment successful!", 
+        description: `Order #${newOrder.id} has been placed successfully.` 
+      });
+      
       navigate('/orders');
     }, 2000);
   };
@@ -109,6 +115,19 @@ const Payment = () => {
                   name="nameOnCard"
                   required
                   value={paymentData.nameOnCard}
+                  onChange={handleInputChange}
+                  className="mt-1"
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="email">Email Address</Label>
+                <Input
+                  id="email"
+                  name="email"
+                  type="email"
+                  required
+                  value={paymentData.email}
                   onChange={handleInputChange}
                   className="mt-1"
                 />
@@ -170,6 +189,7 @@ const Payment = () => {
             </form>
           </div>
 
+          
           <div className="bg-gray-50 rounded-lg p-6 h-fit">
             <h2 className="text-xl font-medium text-gray-900 mb-6">Order Summary</h2>
             
