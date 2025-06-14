@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
 import { Product, products as initialProducts } from '@/data/products';
 
@@ -10,87 +11,69 @@ interface ProductsContextType {
 
 const ProductsContext = createContext<ProductsContextType | undefined>(undefined);
 
-const STORAGE_KEY = 'products';
-
-// Helper function to estimate storage size
-const getStorageSize = (data: any): number => {
-  return new Blob([JSON.stringify(data)]).size;
-};
-
-// Helper function to compress product data for storage
-const compressProductForStorage = (product: Product): any => {
-  return {
-    ...product,
-    // Keep only the first image to save space, and use placeholder for others
-    images: product.images.length > 0 ? [product.images[0]] : [],
-    image: product.images[0] || product.image
-  };
-};
+const STORAGE_KEY = 'loom_products';
 
 export const ProductsProvider = ({ children }: { children: ReactNode }) => {
   const [products, setProducts] = useState<Product[]>(() => {
+    console.log('ProductsProvider - Initializing products');
+    
     // Try to load products from localStorage on initialization
     try {
       const savedProducts = localStorage.getItem(STORAGE_KEY);
       if (savedProducts) {
         const parsedProducts = JSON.parse(savedProducts);
-        // Ensure we always have the initial products plus any saved ones
+        console.log('ProductsProvider - Loaded from localStorage:', parsedProducts.length, 'products');
+        
+        // Merge initial products with saved products, avoiding duplicates
         const existingIds = new Set(initialProducts.map(p => p.id));
         const newProducts = parsedProducts.filter((p: Product) => !existingIds.has(p.id));
-        console.log('ProductsProvider - Loaded products from localStorage:', newProducts.length, 'new products');
-        return [...initialProducts, ...newProducts];
+        const allProducts = [...initialProducts, ...newProducts];
+        
+        console.log('ProductsProvider - Total products after merge:', allProducts.length);
+        return allProducts;
       }
     } catch (error) {
-      console.error('Failed to load products from localStorage:', error);
-      // Clear corrupted data
-      try {
-        localStorage.removeItem(STORAGE_KEY);
-      } catch (e) {
-        console.error('Failed to clear corrupted localStorage:', e);
-      }
+      console.error('ProductsProvider - Failed to load from localStorage:', error);
+      localStorage.removeItem(STORAGE_KEY);
     }
+    
+    console.log('ProductsProvider - Using initial products only:', initialProducts.length);
     return initialProducts;
   });
 
   // Save products to localStorage whenever products change
   useEffect(() => {
+    console.log('ProductsProvider - Products changed, saving to localStorage. Total products:', products.length);
+    
     try {
       // Only save the products that are not in the initial products list
       const existingIds = new Set(initialProducts.map(p => p.id));
       const newProducts = products.filter(p => !existingIds.has(p.id));
       
+      console.log('ProductsProvider - New products to save:', newProducts.length);
+      
       if (newProducts.length === 0) {
-        // No new products to save
+        console.log('ProductsProvider - No new products to save, removing from localStorage');
         localStorage.removeItem(STORAGE_KEY);
         return;
       }
 
-      // Compress products to reduce storage size
-      const compressedProducts = newProducts.map(compressProductForStorage);
-      const dataToSave = JSON.stringify(compressedProducts);
+      // Simple save without compression first
+      const dataToSave = JSON.stringify(newProducts);
+      localStorage.setItem(STORAGE_KEY, dataToSave);
       
-      // Check if data size is reasonable (< 4MB to leave room for other data)
-      const dataSize = getStorageSize(compressedProducts);
-      if (dataSize > 4 * 1024 * 1024) {
-        console.warn('Product data is too large for localStorage, saving only most recent products');
-        // Keep only the 5 most recent products
-        const recentProducts = compressedProducts.slice(0, 5);
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(recentProducts));
-      } else {
-        localStorage.setItem(STORAGE_KEY, dataToSave);
-      }
-      
-      console.log('ProductsProvider - Saved products to localStorage:', newProducts.length, 'products');
+      console.log('ProductsProvider - Successfully saved products to localStorage');
     } catch (error) {
-      console.error('Failed to save products to localStorage:', error);
+      console.error('ProductsProvider - Failed to save to localStorage:', error);
       
-      // If quota exceeded, try to save with further compression
+      // If quota exceeded, try with minimal data
       if (error.name === 'QuotaExceededError') {
+        console.log('ProductsProvider - Quota exceeded, trying minimal save');
         try {
           const existingIds = new Set(initialProducts.map(p => p.id));
           const newProducts = products.filter(p => !existingIds.has(p.id));
           
-          // Save only basic product info without images
+          // Save only essential data
           const minimalProducts = newProducts.map(p => ({
             id: p.id,
             name: p.name,
@@ -105,40 +88,38 @@ export const ProductsProvider = ({ children }: { children: ReactNode }) => {
             rating: p.rating || 0,
             reviewCount: p.reviewCount || 0,
             isNew: p.isNew,
-            // Use placeholder images instead of uploaded ones
             image: 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=500&h=500&fit=crop',
-            images: [
-              'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=500&h=500&fit=crop',
-              'https://images.unsplash.com/photo-1503341504253-dff4815485f1?w=500&h=500&fit=crop'
-            ]
-          })).slice(0, 3); // Keep only 3 most recent products
+            images: ['https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=500&h=500&fit=crop']
+          })).slice(0, 5);
           
           localStorage.setItem(STORAGE_KEY, JSON.stringify(minimalProducts));
-          console.log('ProductsProvider - Saved minimal product data due to quota limits');
+          console.log('ProductsProvider - Saved minimal product data');
         } catch (fallbackError) {
-          console.error('Failed to save even minimal product data:', fallbackError);
-          // Clear storage if even minimal save fails
-          try {
-            localStorage.removeItem(STORAGE_KEY);
-          } catch (clearError) {
-            console.error('Failed to clear localStorage:', clearError);
-          }
+          console.error('ProductsProvider - Failed to save even minimal data:', fallbackError);
+          localStorage.removeItem(STORAGE_KEY);
         }
       }
     }
   }, [products]);
 
   const addProduct = (product: Product) => {
-    setProducts(prev => [product, ...prev]);
+    console.log('ProductsProvider - Adding product:', product.name);
+    setProducts(prev => {
+      const newProducts = [product, ...prev];
+      console.log('ProductsProvider - Total products after add:', newProducts.length);
+      return newProducts;
+    });
   };
 
   const updateProduct = (id: string, updatedProduct: Product) => {
+    console.log('ProductsProvider - Updating product:', id);
     setProducts(prev => prev.map(product => 
       product.id === id ? updatedProduct : product
     ));
   };
 
   const deleteProduct = (id: string) => {
+    console.log('ProductsProvider - Deleting product:', id);
     setProducts(prev => prev.filter(product => product.id !== id));
   };
 
