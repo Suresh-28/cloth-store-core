@@ -1,19 +1,20 @@
-
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Menu, User, Heart, ShoppingBag, X, UserCircle, LogOut, Receipt } from 'lucide-react';
 import { useCart } from '@/contexts/CartContext';
 import { useWishlist } from '@/contexts/WishlistContext';
 import { Button } from '@/components/ui/button';
+import { useAuth } from '@/contexts/AuthContext';
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const { getTotalItems } = useCart();
   const { items: wishlistItems } = useWishlist();
+  const { user, signOut } = useAuth();
   const navigate = useNavigate();
 
-  const handleUserAction = (action: string) => {
+  const handleUserAction = async (action: string) => {
     setIsUserMenuOpen(false);
     // Handle different user actions
     switch (action) {
@@ -25,9 +26,18 @@ const Header = () => {
         console.log('Profile clicked');
         navigate('/profile');
         break;
+      case 'admin':
+        console.log('Admin clicked');
+        navigate('/admin');
+        break;
+      case 'login':
+        console.log('Login clicked');
+        navigate('/admin/login');
+        break;
       case 'logout':
         console.log('Logout clicked');
-        // Handle logout
+        await signOut();
+        navigate('/');
         break;
     }
   };
@@ -73,28 +83,47 @@ const Header = () => {
               {isUserMenuOpen && (
                 <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-md shadow-lg z-50">
                   <div className="py-1">
-                    <button
-                      onClick={() => handleUserAction('orders')}
-                      className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left"
-                    >
-                      <Receipt size={16} className="mr-2" />
-                      Orders
-                    </button>
-                    <button
-                      onClick={() => handleUserAction('profile')}
-                      className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left"
-                    >
-                      <UserCircle size={16} className="mr-2" />
-                      Profile
-                    </button>
-                    <div className="border-t border-gray-100"></div>
-                    <button
-                      onClick={() => handleUserAction('logout')}
-                      className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left"
-                    >
-                      <LogOut size={16} className="mr-2" />
-                      Sign Out
-                    </button>
+                    {user ? (
+                      <>
+                        <button
+                          onClick={() => handleUserAction('orders')}
+                          className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left"
+                        >
+                          <Receipt size={16} className="mr-2" />
+                          Orders
+                        </button>
+                        <button
+                          onClick={() => handleUserAction('profile')}
+                          className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left"
+                        >
+                          <UserCircle size={16} className="mr-2" />
+                          Profile
+                        </button>
+                        <button
+                          onClick={() => handleUserAction('admin')}
+                          className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left"
+                        >
+                          <UserCircle size={16} className="mr-2" />
+                          Admin
+                        </button>
+                        <div className="border-t border-gray-100"></div>
+                        <button
+                          onClick={() => handleUserAction('logout')}
+                          className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left"
+                        >
+                          <LogOut size={16} className="mr-2" />
+                          Sign Out
+                        </button>
+                      </>
+                    ) : (
+                      <button
+                        onClick={() => handleUserAction('login')}
+                        className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left"
+                      >
+                        <UserCircle size={16} className="mr-2" />
+                        Admin Login
+                      </button>
+                    )}
                   </div>
                 </div>
               )}
