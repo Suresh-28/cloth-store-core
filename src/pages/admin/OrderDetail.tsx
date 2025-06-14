@@ -1,10 +1,11 @@
 import { Link, useParams } from 'react-router-dom';
-import { ArrowLeft, Package, Truck, CheckCircle } from 'lucide-react';
+import { ArrowLeft, Package, Truck, CheckCircle, Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { useOrders, Order } from '@/contexts/OrdersContext';
 import { useToast } from '@/hooks/use-toast';
+import jsPDF from 'jspdf';
 
 const OrderDetail = () => {
   const { id } = useParams();
@@ -25,6 +26,100 @@ const OrderDetail = () => {
       </div>
     );
   }
+
+  const downloadInvoice = () => {
+    const pdf = new jsPDF();
+    
+    // Set up the PDF document
+    pdf.setFontSize(20);
+    pdf.text('INVOICE', 20, 30);
+    
+    // Company info
+    pdf.setFontSize(16);
+    pdf.text('Loom & Co.', 20, 50);
+    pdf.setFontSize(10);
+    pdf.text('Fashion Clothing Store', 20, 60);
+    
+    // Order details
+    pdf.setFontSize(14);
+    pdf.text(`Order #${order.id}`, 120, 50);
+    pdf.setFontSize(10);
+    pdf.text(`Date: ${new Date(order.date).toLocaleDateString('en-GB')}`, 120, 60);
+    pdf.text(`Status: ${order.status.charAt(0).toUpperCase() + order.status.slice(1)}`, 120, 70);
+    
+    // Customer info
+    pdf.setFontSize(12);
+    pdf.text('Bill To:', 20, 90);
+    pdf.setFontSize(10);
+    pdf.text(order.customer, 20, 100);
+    pdf.text(order.email, 20, 110);
+    if (order.phone) {
+      pdf.text(order.phone, 20, 120);
+    }
+    
+    // Shipping address
+    if (order.shippingAddress) {
+      pdf.setFontSize(12);
+      pdf.text('Ship To:', 120, 90);
+      pdf.setFontSize(10);
+      pdf.text(order.shippingAddress.address, 120, 100);
+      pdf.text(`${order.shippingAddress.city} ${order.shippingAddress.postalCode}`, 120, 110);
+      pdf.text(order.shippingAddress.country, 120, 120);
+    }
+    
+    // Items table header
+    let yPosition = 150;
+    pdf.setFontSize(10);
+    pdf.text('Item', 20, yPosition);
+    pdf.text('Size', 80, yPosition);
+    pdf.text('Color', 110, yPosition);
+    pdf.text('Qty', 140, yPosition);
+    pdf.text('Price', 170, yPosition);
+    
+    // Draw line under header
+    pdf.line(20, yPosition + 5, 190, yPosition + 5);
+    yPosition += 15;
+    
+    // Items
+    order.items.forEach((item) => {
+      pdf.text(item.name.substring(0, 25), 20, yPosition);
+      pdf.text(item.size, 80, yPosition);
+      pdf.text(item.color, 110, yPosition);
+      pdf.text(item.quantity.toString(), 140, yPosition);
+      pdf.text(`£${item.price.toFixed(2)}`, 170, yPosition);
+      yPosition += 10;
+    });
+    
+    // Totals
+    yPosition += 10;
+    pdf.line(20, yPosition, 190, yPosition);
+    yPosition += 10;
+    
+    if (order.subtotal) {
+      pdf.text('Subtotal:', 140, yPosition);
+      pdf.text(`£${order.subtotal.toFixed(2)}`, 170, yPosition);
+      yPosition += 10;
+    }
+    
+    if (order.shippingCost !== undefined) {
+      pdf.text('Shipping:', 140, yPosition);
+      pdf.text(`£${order.shippingCost.toFixed(2)}`, 170, yPosition);
+      yPosition += 10;
+    }
+    
+    if (order.tax) {
+      pdf.text('Tax:', 140, yPosition);
+      pdf.text(`£${order.tax.toFixed(2)}`, 170, yPosition);
+      yPosition += 10;
+    }
+    
+    pdf.setFontSize(12);
+    pdf.text('Total:', 140, yPosition + 5);
+    pdf.text(`£${order.total.toFixed(2)}`, 170, yPosition + 5);
+    
+    // Save the PDF
+    pdf.save(`invoice-${order.id}.pdf`);
+  };
 
   const statusSteps = [
     { status: 'pending', label: 'Order Placed', icon: Package, completed: true },
@@ -52,6 +147,14 @@ const OrderDetail = () => {
                 <span>Back to Orders</span>
               </Link>
             </div>
+            <Button
+              onClick={downloadInvoice}
+              variant="outline"
+              className="flex items-center space-x-2"
+            >
+              <Download size={16} />
+              <span>Download Invoice</span>
+            </Button>
           </div>
         </div>
       </div>
