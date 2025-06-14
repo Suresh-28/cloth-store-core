@@ -17,6 +17,7 @@ import Cart from "./pages/Cart";
 import Wishlist from "./pages/Wishlist";
 import Checkout from "./pages/Checkout";
 import Payment from "./pages/Payment";
+import PaymentSuccess from "./pages/PaymentSuccess";
 import Orders from "./pages/Orders";
 import Profile from "./pages/Profile";
 import AdminLogin from "./pages/auth/AdminLogin";
@@ -50,6 +51,7 @@ const App = () => (
                     <Route path="/wishlist" element={<Wishlist />} />
                     <Route path="/checkout" element={<Checkout />} />
                     <Route path="/payment" element={<Payment />} />
+                    <Route path="/payment-success" element={<PaymentSuccess />} />
                     <Route path="/orders" element={<Orders />} />
                     <Route path="/profile" element={<Profile />} />
                     <Route path="/admin/login" element={<AdminLogin />} />
