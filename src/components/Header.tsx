@@ -1,7 +1,6 @@
-
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Menu, User, Heart, ShoppingBag, X, Package, UserCircle, Settings, LogOut, ClipboardList } from 'lucide-react';
+import { Menu, User, Heart, ShoppingBag, X, Package, UserCircle, Settings, LogOut, ClipboardList, Receipt } from 'lucide-react';
 import { useCart } from '@/contexts/CartContext';
 import { useWishlist } from '@/contexts/WishlistContext';
 import { Button } from '@/components/ui/button';
@@ -19,6 +18,10 @@ const Header = () => {
     switch (action) {
       case 'orders':
         console.log('Orders clicked');
+        navigate('/orders');
+        break;
+      case 'admin-orders':
+        console.log('Admin Orders clicked');
         navigate('/admin/orders');
         break;
       case 'user-orders':
@@ -85,8 +88,15 @@ const Header = () => {
                       onClick={() => handleUserAction('orders')}
                       className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left"
                     >
-                      <ClipboardList size={16} className="mr-2" />
+                      <Receipt size={16} className="mr-2" />
                       Orders
+                    </button>
+                    <button
+                      onClick={() => handleUserAction('admin-orders')}
+                      className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left"
+                    >
+                      <ClipboardList size={16} className="mr-2" />
+                      Admin Orders
                     </button>
                     <button
                       onClick={() => handleUserAction('user-orders')}
