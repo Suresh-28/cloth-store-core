@@ -74,7 +74,7 @@ const AddProduct = () => {
 
   const handleColorAdd = () => {
     const currentColors = getValues('colors');
-    setValue('colors', [...currentColors, { name: '', value: '#000000' }]);
+    setValue('colors', [...currentColors, { name: '', value: '#000000' }] as { name: string; value: string }[]);
   };
 
   const handleColorRemove = (index: number) => {
@@ -88,7 +88,7 @@ const AddProduct = () => {
     const currentColors = getValues('colors');
     const newColors = [...currentColors];
     newColors[index] = { ...newColors[index], [field]: value };
-    setValue('colors', newColors);
+    setValue('colors', newColors as { name: string; value: string }[]);
   };
 
   const handleFeatureAdd = () => {
