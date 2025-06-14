@@ -8,20 +8,46 @@ import { Button } from '@/components/ui/button';
 import { toast } from '@/hooks/use-toast';
 
 const Wishlist = () => {
-  const { items, removeFromWishlist } = useWishlist();
+  const { items, loading, removeFromWishlist } = useWishlist();
   const { addToCart } = useCart();
 
-  const handleAddToCart = (item: any) => {
-    addToCart({
-      id: item.id,
-      name: item.name,
-      price: item.price,
-      image: item.image,
-      size: 'M', // Default size
-      color: 'Default' // Default color
-    });
-    toast({ title: "Added to cart!" });
+  const handleAddToCart = async (item: any) => {
+    try {
+      await addToCart({
+        id: item.id,
+        name: item.name,
+        price: item.price,
+        image: item.image,
+        size: 'M', // Default size
+        color: 'Default' // Default color
+      });
+      toast({ title: "Added to cart!" });
+    } catch (error) {
+      toast({ title: "Failed to add to cart", variant: "destructive" });
+    }
   };
+
+  const handleRemoveFromWishlist = async (id: string) => {
+    try {
+      await removeFromWishlist(id);
+      toast({ title: "Removed from wishlist" });
+    } catch (error) {
+      toast({ title: "Failed to remove from wishlist", variant: "destructive" });
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-white">
+        <Header />
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+          <div className="text-center">
+            <p className="text-gray-600">Loading wishlist...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (items.length === 0) {
     return (
@@ -64,7 +90,7 @@ const Wishlist = () => {
                   </div>
                 )}
                 <button
-                  onClick={() => removeFromWishlist(item.id)}
+                  onClick={() => handleRemoveFromWishlist(item.id)}
                   className="absolute top-3 right-3 z-10 bg-white/80 hover:bg-white p-2 rounded-full"
                 >
                   <Heart size={18} className="fill-red-500 text-red-500" />

@@ -1,5 +1,6 @@
 
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, { createContext, useContext, ReactNode } from 'react';
+import { useSupabaseWishlist } from '@/hooks/useSupabaseWishlist';
 
 export interface WishlistItem {
   id: string;
@@ -12,36 +13,27 @@ export interface WishlistItem {
 
 interface WishlistContextType {
   items: WishlistItem[];
-  addToWishlist: (item: WishlistItem) => void;
-  removeFromWishlist: (id: string) => void;
+  loading: boolean;
+  addToWishlist: (item: WishlistItem) => Promise<void>;
+  removeFromWishlist: (id: string) => Promise<void>;
   isInWishlist: (id: string) => boolean;
 }
 
 const WishlistContext = createContext<WishlistContextType | undefined>(undefined);
 
 export const WishlistProvider = ({ children }: { children: ReactNode }) => {
-  const [items, setItems] = useState<WishlistItem[]>([]);
-
-  const addToWishlist = (item: WishlistItem) => {
-    setItems(prevItems => {
-      if (prevItems.find(wishlistItem => wishlistItem.id === item.id)) {
-        return prevItems;
-      }
-      return [...prevItems, item];
-    });
-  };
-
-  const removeFromWishlist = (id: string) => {
-    setItems(prevItems => prevItems.filter(item => item.id !== id));
-  };
-
-  const isInWishlist = (id: string) => {
-    return items.some(item => item.id === id);
-  };
+  const {
+    items,
+    loading,
+    addToWishlist,
+    removeFromWishlist,
+    isInWishlist
+  } = useSupabaseWishlist();
 
   return (
     <WishlistContext.Provider value={{
       items,
+      loading,
       addToWishlist,
       removeFromWishlist,
       isInWishlist

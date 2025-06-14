@@ -65,6 +65,7 @@ export type Database = {
       }
       cart_items: {
         Row: {
+          color: string | null
           created_at: string
           id: string
           product_id: string
@@ -74,6 +75,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          color?: string | null
           created_at?: string
           id?: string
           product_id: string
@@ -83,6 +85,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          color?: string | null
           created_at?: string
           id?: string
           product_id?: string
@@ -191,12 +194,17 @@ export type Database = {
           colors: string[] | null
           created_at: string
           description: string | null
+          discount: number | null
+          features: string[] | null
           id: string
           images: string[]
           is_active: boolean | null
+          is_new: boolean | null
           name: string
           original_price: number | null
           price: number
+          rating: number | null
+          review_count: number | null
           sizes: string[] | null
           stock_quantity: number | null
           updated_at: string
@@ -206,12 +214,17 @@ export type Database = {
           colors?: string[] | null
           created_at?: string
           description?: string | null
+          discount?: number | null
+          features?: string[] | null
           id?: string
           images: string[]
           is_active?: boolean | null
+          is_new?: boolean | null
           name: string
           original_price?: number | null
           price: number
+          rating?: number | null
+          review_count?: number | null
           sizes?: string[] | null
           stock_quantity?: number | null
           updated_at?: string
@@ -221,12 +234,17 @@ export type Database = {
           colors?: string[] | null
           created_at?: string
           description?: string | null
+          discount?: number | null
+          features?: string[] | null
           id?: string
           images?: string[]
           is_active?: boolean | null
+          is_new?: boolean | null
           name?: string
           original_price?: number | null
           price?: number
+          rating?: number | null
+          review_count?: number | null
           sizes?: string[] | null
           stock_quantity?: number | null
           updated_at?: string

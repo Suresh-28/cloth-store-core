@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Plus, Edit, Trash2, Search } from 'lucide-react';
@@ -5,9 +6,10 @@ import { useProducts } from '@/contexts/ProductsContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { toast } from '@/hooks/use-toast';
 
 const AdminProducts = () => {
-  const { products } = useProducts();
+  const { products, loading, deleteProduct } = useProducts();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
 
@@ -15,6 +17,43 @@ const AdminProducts = () => {
     product.name.toLowerCase().includes(searchTerm.toLowerCase()) &&
     (selectedCategory === 'all' || product.category === selectedCategory)
   );
+
+  const handleDeleteProduct = async (id: string) => {
+    if (window.confirm('Are you sure you want to delete this product?')) {
+      try {
+        await deleteProduct(id);
+        toast({ title: "Product deleted successfully" });
+      } catch (error) {
+        toast({ title: "Failed to delete product", variant: "destructive" });
+      }
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <div className="bg-white border-b border-gray-200">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex items-center justify-between h-16">
+              <div className="flex items-center space-x-4">
+                <Link to="/admin" className="flex items-center space-x-2">
+                  <div className="w-8 h-8 bg-black rounded-full flex items-center justify-center">
+                    <div className="w-4 h-4 bg-white rounded-full"></div>
+                  </div>
+                  <span className="text-xl font-medium text-gray-900">Loom & Co.</span>
+                </Link>
+                <span className="text-gray-400">|</span>
+                <span className="text-lg font-medium text-gray-900">Products</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <p className="text-center text-gray-600">Loading products...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -104,7 +143,12 @@ const AdminProducts = () => {
                     <Button size="sm" variant="outline">
                       <Edit size={14} />
                     </Button>
-                    <Button size="sm" variant="outline" className="text-red-600 hover:text-red-700">
+                    <Button 
+                      size="sm" 
+                      variant="outline" 
+                      className="text-red-600 hover:text-red-700"
+                      onClick={() => handleDeleteProduct(product.id)}
+                    >
                       <Trash2 size={14} />
                     </Button>
                   </div>

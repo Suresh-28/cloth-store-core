@@ -1,10 +1,11 @@
+
 import { useState } from 'react';
 import Header from '@/components/Header';
 import ProductCard from '@/components/ProductCard';
 import { useProducts } from '@/contexts/ProductsContext';
 
 const Products = () => {
-  const { products } = useProducts();
+  const { products, loading } = useProducts();
   const [sortBy, setSortBy] = useState('newest');
 
   const sortedProducts = [...products].sort((a, b) => {
@@ -19,6 +20,19 @@ const Products = () => {
         return 0;
     }
   });
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-white">
+        <Header />
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="text-center">
+            <p className="text-gray-600">Loading products...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-white">
