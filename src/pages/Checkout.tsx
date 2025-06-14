@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Header from '@/components/Header';
 import { useCart } from '@/contexts/CartContext';
+import { useCheckout } from '@/hooks/useCheckout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -10,6 +11,7 @@ import { Separator } from '@/components/ui/separator';
 
 const Checkout = () => {
   const { items, getTotalPrice } = useCart();
+  const { saveCheckoutData, isSubmitting } = useCheckout();
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
     email: '',
@@ -29,10 +31,13 @@ const Checkout = () => {
     });
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Process checkout logic here
-    navigate('/payment');
+    
+    const success = await saveCheckoutData(formData);
+    if (success) {
+      navigate('/payment');
+    }
   };
 
   if (items.length === 0) {
@@ -199,9 +204,10 @@ const Checkout = () => {
             
             <Button 
               type="submit" 
+              disabled={isSubmitting}
               className="w-full bg-black hover:bg-gray-800 text-white"
             >
-              Continue to Payment
+              {isSubmitting ? 'Saving...' : 'Continue to Payment'}
             </Button>
           </div>
         </form>
