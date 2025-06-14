@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Menu, User, Heart, ShoppingBag, X, UserCircle, LogOut, Receipt } from 'lucide-react';
@@ -25,10 +26,6 @@ const Header = () => {
       case 'profile':
         console.log('Profile clicked');
         navigate('/profile');
-        break;
-      case 'admin':
-        console.log('Admin clicked');
-        navigate('/admin');
         break;
       case 'login':
         console.log('Login clicked');
@@ -98,13 +95,6 @@ const Header = () => {
                         >
                           <UserCircle size={16} className="mr-2" />
                           Profile
-                        </button>
-                        <button
-                          onClick={() => handleUserAction('admin')}
-                          className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left"
-                        >
-                          <UserCircle size={16} className="mr-2" />
-                          Admin
                         </button>
                         <div className="border-t border-gray-100"></div>
                         <button
