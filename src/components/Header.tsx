@@ -23,7 +23,7 @@ const Header = () => {
         break;
       case 'profile':
         console.log('Profile clicked');
-        // Navigate to profile page
+        navigate('/profile');
         break;
       case 'logout':
         console.log('Logout clicked');

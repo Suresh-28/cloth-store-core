@@ -14,6 +14,7 @@ import Wishlist from "./pages/Wishlist";
 import Checkout from "./pages/Checkout";
 import Payment from "./pages/Payment";
 import Orders from "./pages/Orders";
+import Profile from "./pages/Profile";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminProducts from "./pages/admin/AdminProducts";
 import AddProduct from "./pages/admin/AddProduct";
@@ -42,6 +43,7 @@ const App = () => (
               <Route path="/checkout" element={<Checkout />} />
               <Route path="/payment" element={<Payment />} />
               <Route path="/orders" element={<Orders />} />
+              <Route path="/profile" element={<Profile />} />
               <Route path="/admin" element={<AdminDashboard />} />
               <Route path="/admin/products" element={<AdminProducts />} />
               <Route path="/admin/products/add" element={<AddProduct />} />
