@@ -1,24 +1,16 @@
 
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Menu, Search, User, Heart, ShoppingBag, X } from 'lucide-react';
+import { Menu, User, Heart, ShoppingBag, X } from 'lucide-react';
 import { useCart } from '@/contexts/CartContext';
 import { useWishlist } from '@/contexts/WishlistContext';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [isSearchOpen, setIsSearchOpen] = useState(false);
   const { getTotalItems } = useCart();
   const { items: wishlistItems } = useWishlist();
   const navigate = useNavigate();
-
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    navigate('/products');
-    setIsSearchOpen(false);
-  };
 
   return (
     <header className="bg-white border-b border-gray-200 sticky top-0 z-50">
@@ -51,13 +43,6 @@ const Header = () => {
 
           {/* Right side icons */}
           <div className="flex items-center space-x-4">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setIsSearchOpen(!isSearchOpen)}
-            >
-              <Search size={20} />
-            </Button>
             <Button variant="ghost" size="sm">
               <User size={20} />
             </Button>
@@ -83,20 +68,6 @@ const Header = () => {
             </Link>
           </div>
         </div>
-
-        {/* Search Bar */}
-        {isSearchOpen && (
-          <div className="pb-4">
-            <form onSubmit={handleSearch}>
-              <Input
-                type="text"
-                placeholder="Search products..."
-                className="w-full"
-                autoFocus
-              />
-            </form>
-          </div>
-        )}
 
         {/* Mobile Navigation */}
         {isMenuOpen && (
