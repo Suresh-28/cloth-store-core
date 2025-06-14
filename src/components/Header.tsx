@@ -34,11 +34,8 @@ const Header = () => {
             <span className="text-xl font-medium text-gray-900">Loom & Co.</span>
           </Link>
 
-          {/* Desktop Navigation */}
+          {/* Desktop Navigation - removed Shop link */}
           <nav className="hidden md:flex items-center space-x-8">
-            <Link to="/products" className="text-gray-700 hover:text-gray-900 font-medium">
-              Shop
-            </Link>
           </nav>
 
           {/* Right side icons */}
@@ -69,17 +66,10 @@ const Header = () => {
           </div>
         </div>
 
-        {/* Mobile Navigation */}
+        {/* Mobile Navigation - removed Shop link */}
         {isMenuOpen && (
           <div className="md:hidden pb-4">
             <nav className="flex flex-col space-y-4">
-              <Link 
-                to="/products" 
-                className="text-gray-700 hover:text-gray-900 font-medium"
-                onClick={() => setIsMenuOpen(false)}
-              >
-                Shop
-              </Link>
             </nav>
           </div>
         )}
