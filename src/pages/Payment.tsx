@@ -1,8 +1,8 @@
-
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Shield, Smartphone, Copy, CheckCircle } from 'lucide-react';
+import { Shield, Smartphone, Copy } from 'lucide-react';
 import Header from '@/components/Header';
+import PaymentTimer from '@/components/PaymentTimer';
 import { useCart } from '@/contexts/CartContext';
 import { useOrders, Order, OrderItem } from '@/contexts/OrdersContext';
 import { Button } from '@/components/ui/button';
@@ -11,12 +11,14 @@ import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { toast } from '@/hooks/use-toast';
+import { isMobileDevice, generateUPILink } from '@/utils/deviceUtils';
 
 const Payment = () => {
   const { items, getTotalPrice, clearCart } = useCart();
   const { addOrder } = useOrders();
   const navigate = useNavigate();
   const [isProcessing, setIsProcessing] = useState(false);
+  const [showTimer, setShowTimer] = useState(false);
   const [selectedUPI, setSelectedUPI] = useState('');
   const [customUPI, setCustomUPI] = useState('');
   const [paymentData, setPaymentData] = useState({
@@ -40,13 +42,7 @@ const Payment = () => {
   ];
 
   const totalWithTax = getTotalPrice() * 1.2;
-  const upiId = "merchant@upi"; // Replace with actual merchant UPI ID
-  
-  const generateUPILink = () => {
-    const amount = totalWithTax.toFixed(2);
-    const note = `Payment for Order`;
-    return `upi://pay?pa=${upiId}&am=${amount}&cu=GBP&tn=${encodeURIComponent(note)}`;
-  };
+  const upiId = "merchant@upi";
 
   const copyUPIId = () => {
     navigator.clipboard.writeText(upiId);
@@ -54,6 +50,46 @@ const Payment = () => {
       title: "UPI ID Copied!",
       description: "UPI ID has been copied to clipboard"
     });
+  };
+
+  const createOrder = () => {
+    const orderItems: OrderItem[] = items.map(item => ({
+      id: item.id,
+      name: item.name,
+      image: item.image,
+      size: item.size,
+      color: item.color,
+      quantity: item.quantity,
+      price: item.price
+    }));
+
+    const subtotal = getTotalPrice();
+    const tax = subtotal * 0.2;
+    const totalWithTax = subtotal + tax;
+
+    const newOrder: Order = {
+      id: Math.random().toString(36).substr(2, 9).toUpperCase(),
+      date: new Date().toLocaleDateString('en-GB'),
+      status: 'pending',
+      total: totalWithTax,
+      items: orderItems,
+      customer: paymentData.nameOnPayment || 'Customer',
+      email: paymentData.email,
+      subtotal: subtotal,
+      shippingCost: 0,
+      tax: tax
+    };
+
+    console.log('UPI Payment - Creating new order:', newOrder);
+    addOrder(newOrder);
+    clearCart();
+    
+    toast({ 
+      title: "Payment successful!", 
+      description: `Order #${newOrder.id} has been placed successfully via UPI.` 
+    });
+    
+    navigate('/orders');
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -77,56 +113,57 @@ const Payment = () => {
 
     setIsProcessing(true);
 
-    // Simulate UPI payment processing
-    setTimeout(() => {
-      // Create order from cart items
-      const orderItems: OrderItem[] = items.map(item => ({
-        id: item.id,
-        name: item.name,
-        image: item.image,
-        size: item.size,
-        color: item.color,
-        quantity: item.quantity,
-        price: item.price
-      }));
+    const upiLink = generateUPILink(upiId, totalWithTax, 'Payment for Order');
+    const isMobile = isMobileDevice();
 
-      const subtotal = getTotalPrice();
-      const tax = subtotal * 0.2;
-      const totalWithTax = subtotal + tax;
-
-      const newOrder: Order = {
-        id: Math.random().toString(36).substr(2, 9).toUpperCase(),
-        date: new Date().toLocaleDateString('en-GB'),
-        status: 'pending',
-        total: totalWithTax,
-        items: orderItems,
-        customer: paymentData.nameOnPayment || 'Customer',
-        email: paymentData.email,
-        subtotal: subtotal,
-        shippingCost: 0,
-        tax: tax
-      };
-
-      console.log('UPI Payment - Creating new order:', newOrder);
+    if (isMobile) {
+      // On mobile, redirect to UPI app
+      window.location.href = upiLink;
       
-      // Add order to context
-      addOrder(newOrder);
-      
+      // Simulate order creation after a delay
+      setTimeout(() => {
+        createOrder();
+      }, 3000);
+    } else {
+      // On desktop, show timer page
+      setShowTimer(true);
       setIsProcessing(false);
-      clearCart();
-      
-      toast({ 
-        title: "Payment successful!", 
-        description: `Order #${newOrder.id} has been placed successfully via UPI.` 
-      });
-      
-      navigate('/orders');
-    }, 3000);
+    }
+  };
+
+  const handleTimerComplete = () => {
+    createOrder();
+  };
+
+  const handleTimerCancel = () => {
+    setShowTimer(false);
+    setIsProcessing(false);
+    toast({
+      title: "Payment cancelled",
+      description: "You can try again anytime.",
+      variant: "destructive"
+    });
   };
 
   if (items.length === 0) {
     navigate('/cart');
     return null;
+  }
+
+  if (showTimer) {
+    return (
+      <div className="min-h-screen bg-white">
+        <Header />
+        <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <PaymentTimer
+            onComplete={handleTimerComplete}
+            onCancel={handleTimerCancel}
+            amount={totalWithTax}
+            upiId={upiId}
+          />
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -210,9 +247,10 @@ const Payment = () => {
                     <span className="font-medium text-blue-800">Payment Instructions</span>
                   </div>
                   <div className="space-y-2 text-sm text-blue-700">
-                    <p>1. Click "Pay Now" to open your {upiOptions.find(opt => opt.id === selectedUPI)?.name} app</p>
-                    <p>2. Verify the payment amount: £{totalWithTax.toFixed(2)}</p>
-                    <p>3. Complete the payment using your UPI PIN</p>
+                    <p>1. Click "Pay Now" to proceed with payment</p>
+                    <p>2. On mobile: Your UPI app will open automatically</p>
+                    <p>3. On desktop: Follow the on-screen timer instructions</p>
+                    <p>4. Complete payment for £{totalWithTax.toFixed(2)}</p>
                   </div>
                   <div className="mt-3 p-3 bg-white rounded border">
                     <div className="flex items-center justify-between">
@@ -238,18 +276,13 @@ const Payment = () => {
                 type="submit"
                 disabled={isProcessing || !selectedUPI}
                 className="w-full bg-black hover:bg-gray-800 text-white py-3"
-                onClick={() => {
-                  if (selectedUPI && selectedUPI !== 'custom') {
-                    window.open(generateUPILink(), '_blank');
-                  }
-                }}
               >
                 {isProcessing ? 'Processing Payment...' : `Pay £${totalWithTax.toFixed(2)} via UPI`}
               </Button>
             </form>
           </div>
 
-          
+          {/* Order Summary - keep existing code */}
           <div className="bg-gray-50 rounded-lg p-6 h-fit">
             <h2 className="text-xl font-medium text-gray-900 mb-6">Order Summary</h2>
             
