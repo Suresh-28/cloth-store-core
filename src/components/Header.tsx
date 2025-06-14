@@ -81,7 +81,7 @@ const Header = () => {
                       className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left"
                     >
                       <Package size={16} className="mr-2" />
-                      Orders
+                      User Orders
                     </button>
                     <button
                       onClick={() => handleUserAction('profile')}
