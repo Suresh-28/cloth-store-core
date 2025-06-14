@@ -3,13 +3,10 @@ import { useState } from 'react';
 import Header from '@/components/Header';
 import ProductCard from '@/components/ProductCard';
 import { products } from '@/data/products';
-import { Button } from '@/components/ui/button';
-import { Filter, ChevronDown } from 'lucide-react';
 
 const Products = () => {
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [sortBy, setSortBy] = useState('newest');
-  const [showFilters, setShowFilters] = useState(false);
 
   const filteredProducts = products.filter(product =>
     selectedCategory === 'all' || product.category === selectedCategory
@@ -79,17 +76,6 @@ const Products = () => {
                 <option value="name">Name</option>
               </select>
             </div>
-            
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setShowFilters(!showFilters)}
-              className="flex items-center space-x-2"
-            >
-              <Filter size={16} />
-              <span>Filter</span>
-              <div className="w-2 h-2 bg-black rounded-full"></div>
-            </Button>
           </div>
         </div>
 
