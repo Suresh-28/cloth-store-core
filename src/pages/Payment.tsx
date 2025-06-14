@@ -12,7 +12,7 @@ import { toast } from '@/hooks/use-toast';
 
 const Payment = () => {
   const { items, getTotalPrice, clearCart } = useCart();
-  const { addOrder } = useOrders();
+  const { addOrder, orders } = useOrders();
   const navigate = useNavigate();
   const [isProcessing, setIsProcessing] = useState(false);
   const [paymentData, setPaymentData] = useState({
@@ -21,6 +21,8 @@ const Payment = () => {
     cvv: '',
     nameOnCard: ''
   });
+
+  console.log('Payment - Current orders before payment:', orders);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setPaymentData({
@@ -59,8 +61,12 @@ const Payment = () => {
         tax: getTotalPrice() * 0.2
       };
 
+      console.log('Payment - Adding new order:', newOrder);
+      
       // Add order to context
       addOrder(newOrder);
+      
+      console.log('Payment - Orders after adding:', orders);
       
       setIsProcessing(false);
       clearCart();

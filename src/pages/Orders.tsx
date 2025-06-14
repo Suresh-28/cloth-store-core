@@ -31,6 +31,8 @@ const Orders = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedStatus, setSelectedStatus] = useState('all');
 
+  console.log('Orders page - Current orders:', orders);
+
   // Filter orders based on search term and status
   const filteredOrders = orders.filter(order => 
     (order.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
