@@ -1,11 +1,9 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { CartItem } from '@/contexts/CartContext';
 
 interface SupabaseCartItem {
   id: string;
-  user_id: string;
   product_id: string;
   quantity: number;
   size?: string;
