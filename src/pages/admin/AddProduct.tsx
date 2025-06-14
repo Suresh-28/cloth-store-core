@@ -89,11 +89,14 @@ const AddProduct = () => {
     const newColors = currentColors.map((color, i) => {
       if (i === index) {
         return {
-          name: field === 'name' ? value : color.name,
-          value: field === 'value' ? value : color.value
+          name: field === 'name' ? value : (color.name || ''),
+          value: field === 'value' ? value : (color.value || '#000000')
         };
       }
-      return color;
+      return {
+        name: color.name || '',
+        value: color.value || '#000000'
+      };
     });
     setValue('colors', newColors);
   };
