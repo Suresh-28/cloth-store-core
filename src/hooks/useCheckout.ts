@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useCart } from '@/contexts/CartContext';
 import { useOrders, Order, OrderItem } from '@/contexts/OrdersContext';
@@ -18,8 +18,72 @@ interface CheckoutFormData {
 
 export const useCheckout = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [savedContactInfo, setSavedContactInfo] = useState<CheckoutFormData>({
+    email: '',
+    firstName: '',
+    lastName: '',
+    address: '',
+    city: '',
+    postalCode: '',
+    country: 'United Kingdom',
+    phone: ''
+  });
   const { items, getTotalPrice } = useCart();
   const { addOrder } = useOrders();
+
+  // Load saved contact information on mount
+  useEffect(() => {
+    loadSavedContactInfo();
+  }, []);
+
+  const loadSavedContactInfo = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) return;
+
+      // Try to get from user profile first
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', user.id)
+        .single();
+
+      if (profile) {
+        setSavedContactInfo(prev => ({
+          ...prev,
+          email: profile.email || user.email || '',
+          firstName: profile.full_name?.split(' ')[0] || '',
+          lastName: profile.full_name?.split(' ').slice(1).join(' ') || '',
+          phone: profile.phone || ''
+        }));
+      }
+
+      // Try to get the most recent order's shipping info
+      const { data: recentOrder } = await supabase
+        .from('orders')
+        .select('shipping_address')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .single();
+
+      if (recentOrder?.shipping_address) {
+        const shippingAddr = recentOrder.shipping_address as any;
+        setSavedContactInfo(prev => ({
+          ...prev,
+          address: shippingAddr.address || '',
+          city: shippingAddr.city || '',
+          postalCode: shippingAddr.postalCode || '',
+          country: shippingAddr.country || 'United Kingdom'
+        }));
+      }
+
+      console.log('Loaded saved contact info:', savedContactInfo);
+    } catch (error) {
+      console.error('Error loading saved contact info:', error);
+    }
+  };
 
   const saveCheckoutData = async (formData: CheckoutFormData) => {
     setIsSubmitting(true);
@@ -35,6 +99,17 @@ export const useCheckout = () => {
         });
         return false;
       }
+
+      // Update user profile with contact information
+      await supabase
+        .from('profiles')
+        .upsert({
+          id: user.id,
+          email: formData.email,
+          full_name: `${formData.firstName} ${formData.lastName}`.trim(),
+          phone: formData.phone,
+          updated_at: new Date().toISOString()
+        });
 
       // Calculate totals
       const subtotal = getTotalPrice();
@@ -144,6 +219,8 @@ export const useCheckout = () => {
 
   return {
     saveCheckoutData,
-    isSubmitting
+    isSubmitting,
+    savedContactInfo,
+    loadSavedContactInfo
   };
 };

@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Header from '@/components/Header';
 import { useCart } from '@/contexts/CartContext';
@@ -11,7 +11,7 @@ import { Separator } from '@/components/ui/separator';
 
 const Checkout = () => {
   const { items, getTotalPrice } = useCart();
-  const { saveCheckoutData, isSubmitting } = useCheckout();
+  const { saveCheckoutData, isSubmitting, savedContactInfo } = useCheckout();
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
     email: '',
@@ -23,6 +23,13 @@ const Checkout = () => {
     country: 'United Kingdom',
     phone: ''
   });
+
+  // Auto-populate form with saved contact info
+  useEffect(() => {
+    if (savedContactInfo.email || savedContactInfo.firstName) {
+      setFormData(savedContactInfo);
+    }
+  }, [savedContactInfo]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({
@@ -68,6 +75,7 @@ const Checkout = () => {
                     value={formData.email}
                     onChange={handleInputChange}
                     className="mt-1"
+                    placeholder="your@email.com"
                   />
                 </div>
               </div>
@@ -87,6 +95,7 @@ const Checkout = () => {
                       value={formData.firstName}
                       onChange={handleInputChange}
                       className="mt-1"
+                      placeholder="John"
                     />
                   </div>
                   <div>
@@ -98,6 +107,7 @@ const Checkout = () => {
                       value={formData.lastName}
                       onChange={handleInputChange}
                       className="mt-1"
+                      placeholder="Doe"
                     />
                   </div>
                 </div>
@@ -111,6 +121,7 @@ const Checkout = () => {
                     value={formData.address}
                     onChange={handleInputChange}
                     className="mt-1"
+                    placeholder="123 Main Street"
                   />
                 </div>
 
@@ -124,6 +135,7 @@ const Checkout = () => {
                       value={formData.city}
                       onChange={handleInputChange}
                       className="mt-1"
+                      placeholder="London"
                     />
                   </div>
                   <div>
@@ -135,6 +147,7 @@ const Checkout = () => {
                       value={formData.postalCode}
                       onChange={handleInputChange}
                       className="mt-1"
+                      placeholder="SW1A 1AA"
                     />
                   </div>
                 </div>
@@ -148,6 +161,7 @@ const Checkout = () => {
                     value={formData.phone}
                     onChange={handleInputChange}
                     className="mt-1"
+                    placeholder="+44 20 1234 5678"
                   />
                 </div>
               </div>
