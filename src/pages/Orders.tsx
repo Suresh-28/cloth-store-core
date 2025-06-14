@@ -1,11 +1,10 @@
-
 import { useState } from 'react';
-import { Package, Clock, CheckCircle, Truck, Search, Filter } from 'lucide-react';
+import { Package, Clock, CheckCircle, Truck, Search } from 'lucide-react';
 import Header from '@/components/Header';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
+import { useOrders } from '@/contexts/OrdersContext';
 
 interface OrderItem {
   id: string;
@@ -28,97 +27,9 @@ interface Order {
 }
 
 const Orders = () => {
+  const { orders } = useOrders();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedStatus, setSelectedStatus] = useState('all');
-
-  // Enhanced mock orders data with more comprehensive information
-  const [orders] = useState<Order[]>([
-    {
-      id: '1001',
-      date: '2024-01-15',
-      status: 'delivered',
-      total: 75.00,
-      customer: 'John Doe',
-      email: 'john.doe@example.com',
-      items: [
-        {
-          id: '1',
-          name: 'Classic White T-Shirt',
-          image: '/placeholder.svg',
-          size: 'M',
-          color: 'White',
-          quantity: 1,
-          price: 75.00
-        }
-      ]
-    },
-    {
-      id: '1002',
-      date: '2024-01-10',
-      status: 'shipped',
-      total: 140.00,
-      customer: 'Jane Smith',
-      email: 'jane.smith@example.com',
-      items: [
-        {
-          id: '2',
-          name: 'Denim Jacket',
-          image: '/placeholder.svg',
-          size: 'L',
-          color: 'Blue',
-          quantity: 1,
-          price: 85.00
-        },
-        {
-          id: '3',
-          name: 'Black Jeans',
-          image: '/placeholder.svg',
-          size: '32',
-          color: 'Black',
-          quantity: 1,
-          price: 55.00
-        }
-      ]
-    },
-    {
-      id: '1003',
-      date: '2024-01-05',
-      status: 'processing',
-      total: 117.00,
-      customer: 'Mike Johnson',
-      email: 'mike.johnson@example.com',
-      items: [
-        {
-          id: '4',
-          name: 'Wool Sweater',
-          image: '/placeholder.svg',
-          size: 'M',
-          color: 'Gray',
-          quantity: 1,
-          price: 117.00
-        }
-      ]
-    },
-    {
-      id: '1004',
-      date: '2024-01-02',
-      status: 'pending',
-      total: 95.00,
-      customer: 'Sarah Wilson',
-      email: 'sarah.wilson@example.com',
-      items: [
-        {
-          id: '5',
-          name: 'Premium Cotton Tee',
-          image: '/placeholder.svg',
-          size: 'S',
-          color: 'Navy',
-          quantity: 1,
-          price: 95.00
-        }
-      ]
-    }
-  ]);
 
   // Filter orders based on search term and status
   const filteredOrders = orders.filter(order => 

@@ -1,57 +1,44 @@
-
 import { Link, useParams } from 'react-router-dom';
 import { ArrowLeft, Package, Truck, CheckCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
+import { useOrders, Order } from '@/contexts/OrdersContext';
+import { useToast } from '@/hooks/use-toast';
 
 const OrderDetail = () => {
   const { id } = useParams();
+  const { orders, updateOrderStatus } = useOrders();
+  const { toast } = useToast();
 
-  // Mock order data
-  const order = {
-    id: id || '1234',
-    customer: {
-      name: 'John Doe',
-      email: 'john@example.com',
-      phone: '+44 123 456 7890'
-    },
-    shippingAddress: {
-      address: '123 Main Street',
-      city: 'London',
-      postalCode: 'SW1A 1AA',
-      country: 'United Kingdom'
-    },
-    items: [
-      {
-        id: '1',
-        name: 'Classic White T-shirt',
-        image: '/lovable-uploads/2d362445-d030-436f-bcfa-2c06638a9d27.png',
-        size: 'M',
-        color: 'White',
-        quantity: 1,
-        price: 75
-      }
-    ],
-    status: 'delivered',
-    date: '2024-01-15',
-    tracking: 'TR123456789GB',
-    subtotal: 75,
-    shippingCost: 0,
-    tax: 15,
-    total: 90
-  };
+  const order = orders.find(o => o.id === id);
+
+  if (!order) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-gray-900 mb-4">Order not found</h1>
+          <Link to="/admin/orders">
+            <Button>Back to Orders</Button>
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   const statusSteps = [
     { status: 'pending', label: 'Order Placed', icon: Package, completed: true },
-    { status: 'processing', label: 'Processing', icon: Package, completed: true },
-    { status: 'shipped', label: 'Shipped', icon: Truck, completed: true },
-    { status: 'delivered', label: 'Delivered', icon: CheckCircle, completed: true }
+    { status: 'processing', label: 'Processing', icon: Package, completed: ['processing', 'shipped', 'delivered'].includes(order.status) },
+    { status: 'shipped', label: 'Shipped', icon: Truck, completed: ['shipped', 'delivered'].includes(order.status) },
+    { status: 'delivered', label: 'Delivered', icon: CheckCircle, completed: order.status === 'delivered' }
   ];
 
   const handleStatusChange = (newStatus: string) => {
-    // Handle status update
-    console.log('Updating status to:', newStatus);
+    updateOrderStatus(order.id, newStatus as Order['status']);
+    toast({
+      title: "Order Updated",
+      description: `Order status has been updated to ${newStatus}`,
+    });
   };
 
   return (
@@ -155,27 +142,29 @@ const OrderDetail = () => {
               <CardContent>
                 <div className="space-y-3">
                   <div>
-                    <p className="font-medium">{order.customer.name}</p>
-                    <p className="text-sm text-gray-600">{order.customer.email}</p>
-                    <p className="text-sm text-gray-600">{order.customer.phone}</p>
+                    <p className="font-medium">{order.customer}</p>
+                    <p className="text-sm text-gray-600">{order.email}</p>
+                    {order.phone && <p className="text-sm text-gray-600">{order.phone}</p>}
                   </div>
                 </div>
               </CardContent>
             </Card>
 
             {/* Shipping Address */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Shipping Address</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-1">
-                  <p>{order.shippingAddress.address}</p>
-                  <p>{order.shippingAddress.city} {order.shippingAddress.postalCode}</p>
-                  <p>{order.shippingAddress.country}</p>
-                </div>
-              </CardContent>
-            </Card>
+            {order.shippingAddress && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Shipping Address</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-1">
+                    <p>{order.shippingAddress.address}</p>
+                    <p>{order.shippingAddress.city} {order.shippingAddress.postalCode}</p>
+                    <p>{order.shippingAddress.country}</p>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
 
             {/* Order Summary */}
             <Card>
@@ -184,18 +173,24 @@ const OrderDetail = () => {
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Subtotal</span>
-                    <span>£{order.subtotal}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Shipping</span>
-                    <span>£{order.shippingCost}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Tax</span>
-                    <span>£{order.tax}</span>
-                  </div>
+                  {order.subtotal && (
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Subtotal</span>
+                      <span>£{order.subtotal}</span>
+                    </div>
+                  )}
+                  {order.shippingCost !== undefined && (
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Shipping</span>
+                      <span>£{order.shippingCost}</span>
+                    </div>
+                  )}
+                  {order.tax && (
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Tax</span>
+                      <span>£{order.tax}</span>
+                    </div>
+                  )}
                   <Separator />
                   <div className="flex justify-between font-medium text-lg">
                     <span>Total</span>

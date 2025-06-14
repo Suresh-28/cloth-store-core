@@ -1,10 +1,10 @@
-
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Eye, Search, Filter } from 'lucide-react';
+import { Eye, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useOrders } from '@/contexts/OrdersContext';
 
 interface Order {
   id: string;
@@ -17,48 +17,9 @@ interface Order {
 }
 
 const AdminOrders = () => {
+  const { orders } = useOrders();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedStatus, setSelectedStatus] = useState('all');
-
-  // Mock orders data
-  const orders: Order[] = [
-    {
-      id: '1234',
-      customer: 'John Doe',
-      email: 'john@example.com',
-      total: 75,
-      status: 'delivered',
-      date: '2024-01-15',
-      items: 1
-    },
-    {
-      id: '1235',
-      customer: 'Jane Smith',
-      email: 'jane@example.com',
-      total: 140,
-      status: 'shipped',
-      date: '2024-01-14',
-      items: 2
-    },
-    {
-      id: '1236',
-      customer: 'Mike Johnson',
-      email: 'mike@example.com',
-      total: 55,
-      status: 'processing',
-      date: '2024-01-13',
-      items: 1
-    },
-    {
-      id: '1237',
-      customer: 'Sarah Wilson',
-      email: 'sarah@example.com',
-      total: 117,
-      status: 'pending',
-      date: '2024-01-12',
-      items: 1
-    }
-  ];
 
   const filteredOrders = orders.filter(order => 
     (order.customer.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -154,7 +115,7 @@ const AdminOrders = () => {
                         </div>
                       </td>
                       <td className="py-3 px-4 text-gray-600">{order.date}</td>
-                      <td className="py-3 px-4 text-gray-600">{order.items}</td>
+                      <td className="py-3 px-4 text-gray-600">{order.items.length}</td>
                       <td className="py-3 px-4 font-medium">£{order.total}</td>
                       <td className="py-3 px-4">
                         <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(order.status)}`}>
