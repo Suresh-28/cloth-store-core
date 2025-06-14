@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import Header from '@/components/Header';
@@ -154,7 +155,7 @@ const Index = () => {
       </footer>
 
       {/* Modals */}
-      <SizeGuide isOpen={showSizeGuide}  />
+      <SizeGuide isOpen={showSizeGuide} onClose={() => setShowSizeGuide(false)} />
       <ShippingInfo isOpen={showShippingInfo} onClose={() => setShowShippingInfo(false)} />
       <Contact isOpen={showContact} onClose={() => setShowContact(false)} />
     </div>
