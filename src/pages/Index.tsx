@@ -1,4 +1,5 @@
 
+
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import Header from '@/components/Header';
@@ -8,12 +9,62 @@ import ShippingInfo from '@/components/ShippingInfo';
 import Contact from '@/components/Contact';
 import { products } from '@/data/products';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { useToast } from '@/hooks/use-toast';
 
 const Index = () => {
   const featuredProducts = products.slice(0, 4);
   const [showSizeGuide, setShowSizeGuide] = useState(false);
   const [showShippingInfo, setShowShippingInfo] = useState(false);
   const [showContact, setShowContact] = useState(false);
+  const [email, setEmail] = useState('');
+  const [isSubscribing, setIsSubscribing] = useState(false);
+  const { toast } = useToast();
+
+  const handleSubscribe = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!email) {
+      toast({
+        title: "Error",
+        description: "Please enter your email address",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      toast({
+        title: "Error",
+        description: "Please enter a valid email address",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsSubscribing(true);
+    
+    // Simulate API call
+    try {
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      toast({
+        title: "Success!",
+        description: "You've been subscribed to our newsletter",
+      });
+      
+      setEmail('');
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to subscribe. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubscribing(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-white">
@@ -75,16 +126,23 @@ const Index = () => {
           <p className="text-gray-600 mb-8">
             Subscribe to get notified about new products and exclusive offers
           </p>
-          <div className="max-w-md mx-auto flex gap-4">
-            <input
+          <form onSubmit={handleSubscribe} className="max-w-md mx-auto flex gap-4">
+            <Input
               type="email"
               placeholder="Enter your email"
-              className="flex-1 px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-black"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="flex-1"
+              disabled={isSubscribing}
             />
-            <Button className="bg-black hover:bg-gray-800 text-white">
-              Subscribe
+            <Button 
+              type="submit"
+              className="bg-black hover:bg-gray-800 text-white"
+              disabled={isSubscribing}
+            >
+              {isSubscribing ? 'Subscribing...' : 'Subscribe'}
             </Button>
-          </div>
+          </form>
         </div>
       </section>
 
@@ -163,3 +221,4 @@ const Index = () => {
 };
 
 export default Index;
+
