@@ -1,6 +1,7 @@
+
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { CreditCard, Shield, Lock } from 'lucide-react';
+import { Shield, Smartphone, Copy, CheckCircle } from 'lucide-react';
 import Header from '@/components/Header';
 import { useCart } from '@/contexts/CartContext';
 import { useOrders, Order, OrderItem } from '@/contexts/OrdersContext';
@@ -8,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { toast } from '@/hooks/use-toast';
 
 const Payment = () => {
@@ -15,11 +17,10 @@ const Payment = () => {
   const { addOrder } = useOrders();
   const navigate = useNavigate();
   const [isProcessing, setIsProcessing] = useState(false);
+  const [selectedUPI, setSelectedUPI] = useState('');
+  const [customUPI, setCustomUPI] = useState('');
   const [paymentData, setPaymentData] = useState({
-    cardNumber: '',
-    expiryDate: '',
-    cvv: '',
-    nameOnCard: '',
+    nameOnPayment: '',
     email: 'customer@example.com'
   });
 
@@ -30,11 +31,53 @@ const Payment = () => {
     });
   };
 
+  const upiOptions = [
+    { id: 'gpay', name: 'Google Pay', icon: '🌈' },
+    { id: 'phonepe', name: 'PhonePe', icon: '💜' },
+    { id: 'paytm', name: 'Paytm', icon: '💙' },
+    { id: 'bhim', name: 'BHIM UPI', icon: '🇮🇳' },
+    { id: 'custom', name: 'Other UPI ID', icon: '📱' }
+  ];
+
+  const totalWithTax = getTotalPrice() * 1.2;
+  const upiId = "merchant@upi"; // Replace with actual merchant UPI ID
+  
+  const generateUPILink = () => {
+    const amount = totalWithTax.toFixed(2);
+    const note = `Payment for Order`;
+    return `upi://pay?pa=${upiId}&am=${amount}&cu=GBP&tn=${encodeURIComponent(note)}`;
+  };
+
+  const copyUPIId = () => {
+    navigator.clipboard.writeText(upiId);
+    toast({
+      title: "UPI ID Copied!",
+      description: "UPI ID has been copied to clipboard"
+    });
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!selectedUPI) {
+      toast({
+        title: "Please select a UPI option",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (selectedUPI === 'custom' && !customUPI) {
+      toast({
+        title: "Please enter your UPI ID",
+        variant: "destructive"
+      });
+      return;
+    }
+
     setIsProcessing(true);
 
-    // Simulate payment processing
+    // Simulate UPI payment processing
     setTimeout(() => {
       // Create order from cart items
       const orderItems: OrderItem[] = items.map(item => ({
@@ -57,14 +100,14 @@ const Payment = () => {
         status: 'pending',
         total: totalWithTax,
         items: orderItems,
-        customer: paymentData.nameOnCard || 'Customer',
+        customer: paymentData.nameOnPayment || 'Customer',
         email: paymentData.email,
         subtotal: subtotal,
         shippingCost: 0,
         tax: tax
       };
 
-      console.log('Payment - Creating new order:', newOrder);
+      console.log('UPI Payment - Creating new order:', newOrder);
       
       // Add order to context
       addOrder(newOrder);
@@ -74,19 +117,17 @@ const Payment = () => {
       
       toast({ 
         title: "Payment successful!", 
-        description: `Order #${newOrder.id} has been placed successfully.` 
+        description: `Order #${newOrder.id} has been placed successfully via UPI.` 
       });
       
       navigate('/orders');
-    }, 2000);
+    }, 3000);
   };
 
   if (items.length === 0) {
     navigate('/cart');
     return null;
   }
-
-  const totalWithTax = getTotalPrice() * 1.2;
 
   return (
     <div className="min-h-screen bg-white">
@@ -100,21 +141,21 @@ const Payment = () => {
             <div className="bg-gray-50 rounded-lg p-6 mb-8">
               <div className="flex items-center space-x-2 mb-4">
                 <Shield className="text-green-600" size={20} />
-                <span className="text-sm font-medium text-gray-900">Secure Payment</span>
+                <span className="text-sm font-medium text-gray-900">Secure UPI Payment</span>
               </div>
               <p className="text-sm text-gray-600">
-                Your payment information is encrypted and secure.
+                Pay securely using UPI. Your payment information is encrypted and protected.
               </p>
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-6">
               <div>
-                <Label htmlFor="nameOnCard">Name on Card</Label>
+                <Label htmlFor="nameOnPayment">Name</Label>
                 <Input
-                  id="nameOnCard"
-                  name="nameOnCard"
+                  id="nameOnPayment"
+                  name="nameOnPayment"
                   required
-                  value={paymentData.nameOnCard}
+                  value={paymentData.nameOnPayment}
                   onChange={handleInputChange}
                   className="mt-1"
                 />
@@ -134,57 +175,76 @@ const Payment = () => {
               </div>
 
               <div>
-                <Label htmlFor="cardNumber">Card Number</Label>
-                <div className="relative mt-1">
-                  <Input
-                    id="cardNumber"
-                    name="cardNumber"
-                    placeholder="1234 5678 9012 3456"
-                    required
-                    value={paymentData.cardNumber}
-                    onChange={handleInputChange}
-                    className="pl-10"
-                  />
-                  <CreditCard className="absolute left-3 top-3 text-gray-400" size={18} />
-                </div>
+                <Label className="text-base font-medium mb-4 block">Choose UPI Payment Method</Label>
+                <RadioGroup value={selectedUPI} onValueChange={setSelectedUPI} className="space-y-3">
+                  {upiOptions.map((option) => (
+                    <div key={option.id} className="flex items-center space-x-3 p-3 border rounded-lg hover:bg-gray-50">
+                      <RadioGroupItem value={option.id} id={option.id} />
+                      <label htmlFor={option.id} className="flex items-center space-x-3 cursor-pointer flex-1">
+                        <span className="text-2xl">{option.icon}</span>
+                        <span className="font-medium">{option.name}</span>
+                      </label>
+                    </div>
+                  ))}
+                </RadioGroup>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              {selectedUPI === 'custom' && (
                 <div>
-                  <Label htmlFor="expiryDate">Expiry Date</Label>
+                  <Label htmlFor="customUPI">Enter your UPI ID</Label>
                   <Input
-                    id="expiryDate"
-                    name="expiryDate"
-                    placeholder="MM/YY"
-                    required
-                    value={paymentData.expiryDate}
-                    onChange={handleInputChange}
+                    id="customUPI"
+                    name="customUPI"
+                    placeholder="yourname@upi"
+                    value={customUPI}
+                    onChange={(e) => setCustomUPI(e.target.value)}
                     className="mt-1"
                   />
                 </div>
-                <div>
-                  <Label htmlFor="cvv">CVV</Label>
-                  <div className="relative mt-1">
-                    <Input
-                      id="cvv"
-                      name="cvv"
-                      placeholder="123"
-                      required
-                      value={paymentData.cvv}
-                      onChange={handleInputChange}
-                      className="pl-10"
-                    />
-                    <Lock className="absolute left-3 top-3 text-gray-400" size={18} />
+              )}
+
+              {selectedUPI && selectedUPI !== 'custom' && (
+                <div className="bg-blue-50 p-4 rounded-lg">
+                  <div className="flex items-center space-x-2 mb-2">
+                    <Smartphone className="text-blue-600" size={20} />
+                    <span className="font-medium text-blue-800">Payment Instructions</span>
+                  </div>
+                  <div className="space-y-2 text-sm text-blue-700">
+                    <p>1. Click "Pay Now" to open your {upiOptions.find(opt => opt.id === selectedUPI)?.name} app</p>
+                    <p>2. Verify the payment amount: £{totalWithTax.toFixed(2)}</p>
+                    <p>3. Complete the payment using your UPI PIN</p>
+                  </div>
+                  <div className="mt-3 p-3 bg-white rounded border">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium">Merchant UPI ID:</span>
+                      <div className="flex items-center space-x-2">
+                        <code className="bg-gray-100 px-2 py-1 rounded text-xs">{upiId}</code>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={copyUPIId}
+                          className="h-6 w-6 p-0"
+                        >
+                          <Copy size={12} />
+                        </Button>
+                      </div>
+                    </div>
                   </div>
                 </div>
-              </div>
+              )}
 
               <Button
                 type="submit"
-                disabled={isProcessing}
+                disabled={isProcessing || !selectedUPI}
                 className="w-full bg-black hover:bg-gray-800 text-white py-3"
+                onClick={() => {
+                  if (selectedUPI && selectedUPI !== 'custom') {
+                    window.open(generateUPILink(), '_blank');
+                  }
+                }}
               >
-                {isProcessing ? 'Processing...' : `Pay £${totalWithTax.toFixed(2)}`}
+                {isProcessing ? 'Processing Payment...' : `Pay £${totalWithTax.toFixed(2)} via UPI`}
               </Button>
             </form>
           </div>
