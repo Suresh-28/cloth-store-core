@@ -1,9 +1,9 @@
-
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { CreditCard, Shield, Lock } from 'lucide-react';
 import Header from '@/components/Header';
 import { useCart } from '@/contexts/CartContext';
+import { useOrders, Order, OrderItem } from '@/contexts/OrdersContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -12,6 +12,7 @@ import { toast } from '@/hooks/use-toast';
 
 const Payment = () => {
   const { items, getTotalPrice, clearCart } = useCart();
+  const { addOrder } = useOrders();
   const navigate = useNavigate();
   const [isProcessing, setIsProcessing] = useState(false);
   const [paymentData, setPaymentData] = useState({
@@ -34,10 +35,37 @@ const Payment = () => {
 
     // Simulate payment processing
     setTimeout(() => {
+      // Create order from cart items
+      const orderItems: OrderItem[] = items.map(item => ({
+        id: item.id,
+        name: item.name,
+        image: item.image,
+        size: item.size,
+        color: item.color,
+        quantity: item.quantity,
+        price: item.price
+      }));
+
+      const newOrder: Order = {
+        id: Math.random().toString(36).substr(2, 9),
+        date: new Date().toLocaleDateString('en-GB'),
+        status: 'pending',
+        total: totalWithTax,
+        items: orderItems,
+        customer: paymentData.nameOnCard || 'Customer',
+        email: 'customer@example.com',
+        subtotal: getTotalPrice(),
+        shippingCost: 0,
+        tax: getTotalPrice() * 0.2
+      };
+
+      // Add order to context
+      addOrder(newOrder);
+      
       setIsProcessing(false);
       clearCart();
       toast({ title: "Payment successful!", description: "Your order has been placed." });
-      navigate('/');
+      navigate('/orders');
     }, 2000);
   };
 
