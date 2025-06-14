@@ -1,8 +1,10 @@
-
 import { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Heart, ChevronDown } from 'lucide-react';
 import Header from '@/components/Header';
+import SizeGuide from '@/components/SizeGuide';
+import ShippingInfo from '@/components/ShippingInfo';
+import Contact from '@/components/Contact';
 import { products } from '@/data/products';
 import { Button } from '@/components/ui/button';
 import { useCart } from '@/contexts/CartContext';
@@ -18,6 +20,9 @@ const ProductDetail = () => {
   const [quantity, setQuantity] = useState(1);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [activeAccordion, setActiveAccordion] = useState<string | null>(null);
+  const [showSizeGuide, setShowSizeGuide] = useState(false);
+  const [showShippingInfo, setShowShippingInfo] = useState(false);
+  const [showContact, setShowContact] = useState(false);
 
   const { addToCart } = useCart();
   const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
@@ -82,7 +87,7 @@ const ProductDetail = () => {
   const accordionItems = [
     { id: 'description', title: 'Description', content: product.description },
     { id: 'features', title: 'Features', content: product.features.join(', ') },
-    { id: 'guarantees', title: 'Guarantees', content: 'Free returns within 30 days. Quality guarantee.' },
+    { id: 'guarantees', title: 'Guarantees', content: 'Quality guarantee on all products.' },
     { id: 'reviews', title: 'Reviews', content: `${product.reviewCount} customer reviews. Average rating: ${product.rating}/5` }
   ];
 
@@ -141,7 +146,12 @@ const ProductDetail = () => {
                     <span className="text-xl text-green-600 font-medium">£{product.price}</span>
                   )}
                 </div>
-                <span className="text-sm text-gray-600">Size guide</span>
+                <button 
+                  onClick={() => setShowSizeGuide(true)}
+                  className="text-sm text-gray-600 hover:text-gray-900 underline"
+                >
+                  Size guide
+                </button>
               </div>
               
               <div className="flex items-center space-x-1 mb-4">
@@ -278,6 +288,11 @@ const ProductDetail = () => {
           </div>
         </div>
       </div>
+
+      {/* Modals */}
+      <SizeGuide isOpen={showSizeGuide} onClose={() => setShowSizeGuide(false)} />
+      <ShippingInfo isOpen={showShippingInfo} onClose={() => setShowShippingInfo(false)} />
+      <Contact isOpen={showContact} onClose={() => setShowContact(false)} />
     </div>
   );
 };

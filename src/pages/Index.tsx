@@ -1,11 +1,18 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import Header from '@/components/Header';
 import ProductCard from '@/components/ProductCard';
+import SizeGuide from '@/components/SizeGuide';
+import ShippingInfo from '@/components/ShippingInfo';
+import Contact from '@/components/Contact';
 import { products } from '@/data/products';
 import { Button } from '@/components/ui/button';
 
 const Index = () => {
   const featuredProducts = products.slice(0, 4);
+  const [showSizeGuide, setShowSizeGuide] = useState(false);
+  const [showShippingInfo, setShowShippingInfo] = useState(false);
+  const [showContact, setShowContact] = useState(false);
 
   return (
     <div className="min-h-screen bg-white">
@@ -106,16 +113,36 @@ const Index = () => {
             <div>
               <h3 className="font-medium text-gray-900 mb-4">Support</h3>
               <ul className="space-y-2 text-gray-600">
-                <li><a href="#" className="hover:text-gray-900">Size Guide</a></li>
-                <li><a href="#" className="hover:text-gray-900">Shipping</a></li>
-                <li><a href="#" className="hover:text-gray-900">Returns</a></li>
+                <li>
+                  <button 
+                    onClick={() => setShowSizeGuide(true)}
+                    className="hover:text-gray-900"
+                  >
+                    Size Guide
+                  </button>
+                </li>
+                <li>
+                  <button 
+                    onClick={() => setShowShippingInfo(true)}
+                    className="hover:text-gray-900"
+                  >
+                    Shipping
+                  </button>
+                </li>
               </ul>
             </div>
             
             <div>
               <h3 className="font-medium text-gray-900 mb-4">Company</h3>
               <ul className="space-y-2 text-gray-600">
-                <li><a href="#" className="hover:text-gray-900">Contact</a></li>
+                <li>
+                  <button 
+                    onClick={() => setShowContact(true)}
+                    className="hover:text-gray-900"
+                  >
+                    Contact
+                  </button>
+                </li>
               </ul>
             </div>
           </div>
@@ -125,6 +152,11 @@ const Index = () => {
           </div>
         </div>
       </footer>
+
+      {/* Modals */}
+      <SizeGuide isOpen={showSizeGuide}  />
+      <ShippingInfo isOpen={showShippingInfo} onClose={() => setShowShippingInfo(false)} />
+      <Contact isOpen={showContact} onClose={() => setShowContact(false)} />
     </div>
   );
 };
