@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { User, Mail, Phone, MapPin, Edit2, Save, X } from 'lucide-react';
 import Header from '@/components/Header';
@@ -6,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { useToast } from '@/components/ui/use-toast';
 
 interface UserProfile {
   name: string;
@@ -14,6 +14,7 @@ interface UserProfile {
   address: string;
   city: string;
   postalCode: string;
+  avatar?: string;
 }
 
 const Profile = () => {
@@ -27,6 +28,7 @@ const Profile = () => {
     postalCode: 'W1C 1DE'
   });
   const [editedProfile, setEditedProfile] = useState<UserProfile>(profile);
+  const { toast } = useToast();
 
   const handleEdit = () => {
     setIsEditing(true);
@@ -37,6 +39,10 @@ const Profile = () => {
     setProfile(editedProfile);
     setIsEditing(false);
     console.log('Profile saved:', editedProfile);
+    toast({
+      title: "Profile Updated",
+      description: "Your profile has been saved successfully.",
+    });
   };
 
   const handleCancel = () => {
@@ -49,6 +55,29 @@ const Profile = () => {
       ...prev,
       [field]: value
     }));
+  };
+
+  const handlePhotoChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const result = e.target?.result as string;
+        setEditedProfile(prev => ({
+          ...prev,
+          avatar: result
+        }));
+        setProfile(prev => ({
+          ...prev,
+          avatar: result
+        }));
+        toast({
+          title: "Photo Updated",
+          description: "Your profile photo has been changed successfully.",
+        });
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
   return (
@@ -67,14 +96,25 @@ const Profile = () => {
             <Card>
               <CardContent className="p-6 text-center">
                 <Avatar className="w-24 h-24 mx-auto mb-4">
-                  <AvatarImage src="/placeholder.svg" alt="Profile" />
+                  <AvatarImage src={profile.avatar || "/placeholder.svg"} alt="Profile" />
                   <AvatarFallback className="bg-gray-200 text-gray-600 text-2xl">
                     {profile.name.split(' ').map(n => n[0]).join('')}
                   </AvatarFallback>
                 </Avatar>
                 <h3 className="text-lg font-medium text-gray-900 mb-2">{profile.name}</h3>
                 <p className="text-sm text-gray-600 mb-4">{profile.email}</p>
-                <Button variant="outline" size="sm">
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handlePhotoChange}
+                  className="hidden"
+                  id="photo-upload"
+                />
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => document.getElementById('photo-upload')?.click()}
+                >
                   Change Photo
                 </Button>
               </CardContent>
