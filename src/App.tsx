@@ -5,7 +5,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { CartProvider } from "./contexts/CartContext";
-import { WishlistProvider } from "./contexts/WishlistProvider";
+import { WishlistProvider } from "./contexts/WishlistContext";
 import { ProductsProvider } from "./contexts/ProductsContext";
 import { OrdersProvider } from "./contexts/OrdersContext";
 import { AuthProvider } from "./contexts/AuthContext";
