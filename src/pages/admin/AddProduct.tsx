@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Upload, X, Plus } from 'lucide-react';
@@ -88,7 +87,7 @@ const AddProduct = () => {
   const handleColorChange = (index: number, field: 'name' | 'value', value: string) => {
     const currentColors = getValues('colors');
     const newColors = [...currentColors];
-    newColors[index][field] = value;
+    newColors[index] = { ...newColors[index], [field]: value };
     setValue('colors', newColors);
   };
 
