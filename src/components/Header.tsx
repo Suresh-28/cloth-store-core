@@ -1,7 +1,7 @@
 
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Menu, User, Heart, ShoppingBag, X, UserCircle, Settings, LogOut, Receipt } from 'lucide-react';
+import { Menu, User, Heart, ShoppingBag, X, UserCircle, LogOut, Receipt } from 'lucide-react';
 import { useCart } from '@/contexts/CartContext';
 import { useWishlist } from '@/contexts/WishlistContext';
 import { Button } from '@/components/ui/button';
@@ -24,10 +24,6 @@ const Header = () => {
       case 'profile':
         console.log('Profile clicked');
         // Navigate to profile page
-        break;
-      case 'settings':
-        console.log('Settings clicked');
-        // Navigate to settings page
         break;
       case 'logout':
         console.log('Logout clicked');
@@ -90,13 +86,6 @@ const Header = () => {
                     >
                       <UserCircle size={16} className="mr-2" />
                       Profile
-                    </button>
-                    <button
-                      onClick={() => handleUserAction('settings')}
-                      className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left"
-                    >
-                      <Settings size={16} className="mr-2" />
-                      Settings
                     </button>
                     <div className="border-t border-gray-100"></div>
                     <button
