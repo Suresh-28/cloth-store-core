@@ -1,6 +1,7 @@
+
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Menu, User, Heart, ShoppingBag, X, Package, UserCircle, Settings, LogOut } from 'lucide-react';
+import { Menu, User, Heart, ShoppingBag, X, Package, UserCircle, Settings, LogOut, ClipboardList } from 'lucide-react';
 import { useCart } from '@/contexts/CartContext';
 import { useWishlist } from '@/contexts/WishlistContext';
 import { Button } from '@/components/ui/button';
@@ -18,6 +19,10 @@ const Header = () => {
     switch (action) {
       case 'orders':
         console.log('Orders clicked');
+        navigate('/admin/orders');
+        break;
+      case 'user-orders':
+        console.log('User Orders clicked');
         navigate('/admin/orders');
         break;
       case 'profile':
@@ -78,6 +83,13 @@ const Header = () => {
                   <div className="py-1">
                     <button
                       onClick={() => handleUserAction('orders')}
+                      className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left"
+                    >
+                      <ClipboardList size={16} className="mr-2" />
+                      Orders
+                    </button>
+                    <button
+                      onClick={() => handleUserAction('user-orders')}
                       className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left"
                     >
                       <Package size={16} className="mr-2" />
