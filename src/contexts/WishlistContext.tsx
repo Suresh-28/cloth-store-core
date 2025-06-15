@@ -26,15 +26,56 @@ export const WishlistProvider = ({ children }: { children: ReactNode }) => {
 
   // Load wishlist from localStorage on mount
   useEffect(() => {
-    const savedWishlist = localStorage.getItem('wishlist');
-    if (savedWishlist) {
-      setItems(JSON.parse(savedWishlist));
+    try {
+      const savedWishlist = localStorage.getItem('wishlist');
+      if (savedWishlist) {
+        const parsedWishlist = JSON.parse(savedWishlist);
+        // Validate that it's an array and not corrupted
+        if (Array.isArray(parsedWishlist)) {
+          setItems(parsedWishlist);
+        } else {
+          console.warn('Invalid wishlist data in localStorage, clearing it');
+          localStorage.removeItem('wishlist');
+        }
+      }
+    } catch (error) {
+      console.error('Error loading wishlist from localStorage:', error);
+      // Clear corrupted data
+      localStorage.removeItem('wishlist');
     }
   }, []);
 
   // Save to localStorage whenever items change
   useEffect(() => {
-    localStorage.setItem('wishlist', JSON.stringify(items));
+    try {
+      localStorage.setItem('wishlist', JSON.stringify(items));
+    } catch (error) {
+      console.error('Error saving wishlist to localStorage:', error);
+      
+      // Handle quota exceeded error
+      if (error instanceof DOMException && error.name === 'QuotaExceededError') {
+        console.warn('localStorage quota exceeded, clearing old data and retrying');
+        
+        // Try to clear some space by removing the wishlist and trying again
+        localStorage.removeItem('wishlist');
+        
+        try {
+          // Try to save a smaller subset if there are many items
+          const itemsToSave = items.slice(0, 50); // Limit to 50 items max
+          localStorage.setItem('wishlist', JSON.stringify(itemsToSave));
+          
+          // Update state to match what was actually saved
+          if (itemsToSave.length < items.length) {
+            setItems(itemsToSave);
+            console.warn('Wishlist was truncated to fit in localStorage');
+          }
+        } catch (retryError) {
+          console.error('Failed to save even truncated wishlist:', retryError);
+          // If all else fails, clear the wishlist
+          setItems([]);
+        }
+      }
+    }
   }, [items]);
 
   const addToWishlist = async (item: WishlistItem) => {
