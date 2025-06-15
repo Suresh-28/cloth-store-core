@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Heart, ShoppingBag, Star } from 'lucide-react';
@@ -38,7 +39,7 @@ const ProductCard = ({
   isNew = false,
 }: ProductCardProps) => {
   const { addToCart } = useCart();
-  const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
+  const { addToWishlist, removeFromWishlist, isInWishlist, canUseWishlist } = useWishlist();
   const isWishlisted = isInWishlist(id);
 
   const handleAddToCart = async () => {
@@ -69,11 +70,18 @@ const ProductCard = ({
           variant: "destructive"
         });
       }
-      console.error('[ProductCard] Failed to add to cart:', error);
     }
   };
 
   const handleWishlistToggle = async () => {
+    if (!canUseWishlist) {
+      toast({
+        title: "Login required",
+        description: "Please log in to use the wishlist feature.",
+        variant: "destructive",
+      });
+      return;
+    }
     try {
       if (isWishlisted) {
         await removeFromWishlist(id);
@@ -89,23 +97,11 @@ const ProductCard = ({
         });
       }
     } catch (error: any) {
-      if (
-        error?.message?.toLowerCase().includes("login") ||
-        error?.message?.toLowerCase().includes("auth")
-      ) {
-        toast({
-          title: "Login required",
-          description: "Please log in to use the wishlist feature.",
-          variant: "destructive",
-        });
-      } else {
-        toast({
-          title: "Error",
-          description: "Failed to update wishlist. Please try again.",
-          variant: "destructive",
-        });
-      }
-      console.error("[ProductCard] Failed to update wishlist:", error);
+      toast({
+        title: "Error",
+        description: "Failed to update wishlist. Please try again.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -210,3 +206,5 @@ const ProductCard = ({
 };
 
 export default ProductCard;
+
+// Note: This file is getting quite long (over 200 lines). Consider refactoring into smaller files for maintainability!

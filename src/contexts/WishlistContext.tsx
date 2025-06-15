@@ -14,6 +14,8 @@ export interface WishlistItem {
 interface WishlistContextType {
   items: WishlistItem[];
   loading: boolean;
+  user: any;
+  canUseWishlist: boolean;
   addToWishlist: (id: string) => Promise<void>;
   removeFromWishlist: (id: string) => Promise<void>;
   isInWishlist: (id: string) => boolean;
@@ -26,20 +28,21 @@ export const WishlistProvider = ({ children }: { children: ReactNode }) => {
   const {
     items,
     loading,
+    user,
+    canUseWishlist,
     addToWishlist,
     removeFromWishlist,
     isInWishlist,
     refetch,
   } = useSupabaseWishlist();
 
-  // Adapter for new functions (they only take product id as argument)
-  const adaptedAddToWishlist = (item: WishlistItem) => addToWishlist(item.id);
-
   return (
     <WishlistContext.Provider
       value={{
         items,
         loading,
+        user,
+        canUseWishlist,
         addToWishlist,
         removeFromWishlist,
         isInWishlist,

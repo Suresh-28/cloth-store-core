@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -15,15 +14,40 @@ export interface SupabaseWishlistItem {
 export const useSupabaseWishlist = () => {
   const [items, setItems] = useState<SupabaseWishlistItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState<any>(null);
+
+  // On mount, get current user and listen for changes
+  useEffect(() => {
+    let mounted = true;
+    const fetchAuth = async () => {
+      const { data } = await supabase.auth.getUser();
+      if (mounted) {
+        setUser(data?.user || null);
+      }
+    };
+    fetchAuth();
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      setUser(session?.user ?? null);
+      fetchWishlistItems();
+    });
+    return () => {
+      mounted = false;
+      subscription?.unsubscribe();
+    };
+    // eslint-disable-next-line
+  }, []);
+
+  const canUseWishlist = !!user;
 
   const fetchWishlistItems = async () => {
     setLoading(true);
     try {
-      const { data: { user }, error: userErr } = await supabase.auth.getUser();
-      console.log("[Wishlist] fetchWishlistItems - user", user, userErr);
-      if (!user) {
-        console.warn("[Wishlist] No user - returning empty items.");
+      const { data: { user: currentUser }, error: userErr } = await supabase.auth.getUser();
+      // sync user state if they log out/in during lifetime
+      setUser(currentUser || null);
+      if (!currentUser) {
         setItems([]);
+        setLoading(false);
         return;
       }
       const { data, error } = await supabase
@@ -41,11 +65,11 @@ export const useSupabaseWishlist = () => {
             discount
           )
         `)
-        .eq("user_id", user.id);
+        .eq("user_id", currentUser.id);
 
       if (error) {
-        console.error("[Wishlist] Error fetching wishlist:", error);
         setItems([]);
+        setLoading(false);
         return;
       }
 
@@ -59,11 +83,8 @@ export const useSupabaseWishlist = () => {
         product_id: item.product_id,
       }));
 
-      console.log("[Wishlist] Items after fetch:", wishlistItems);
-
       setItems(wishlistItems);
     } catch (err) {
-      console.error("[Wishlist] fetchWishlistItems unexpected error:", err);
       setItems([]);
     } finally {
       setLoading(false);
@@ -71,11 +92,8 @@ export const useSupabaseWishlist = () => {
   };
 
   const addToWishlist = async (productId: string) => {
-    const { data: { user } } = await supabase.auth.getUser();
-    console.log("[Wishlist] addToWishlist - user", user, productId);
     if (!user) {
-      console.error("[Wishlist] You must be logged in to use the wishlist.");
-      throw new Error("You must be logged in to use the wishlist.");
+      throw new Error("Please login to use the wishlist.");
     }
     // Insert only if not already wishlisted
     const { data: existing, error: existingError } = await supabase
@@ -85,32 +103,26 @@ export const useSupabaseWishlist = () => {
       .eq("product_id", productId);
 
     if (existingError) {
-      console.error("[Wishlist] addToWishlist - check existing error:", existingError);
       throw existingError;
     }
 
     if (existing && existing.length > 0) {
-      console.log("[Wishlist] Item already in wishlist, not adding.", existing);
-      return; // already added
+      // already added
+      return;
     }
 
     const { error } = await supabase
       .from("wishlist_items")
       .insert([{ user_id: user.id, product_id: productId }]);
     if (error) {
-      console.error("[Wishlist] addToWishlist - insert error:", error);
       throw error;
     }
-    console.log("[Wishlist] Item added to wishlist, refreshing...");
     await fetchWishlistItems();
   };
 
   const removeFromWishlist = async (productId: string) => {
-    const { data: { user } } = await supabase.auth.getUser();
-    console.log("[Wishlist] removeFromWishlist - user", user, productId);
     if (!user) {
-      console.error("[Wishlist] You must be logged in to use the wishlist.");
-      throw new Error("You must be logged in to use the wishlist.");
+      throw new Error("Please login to use the wishlist.");
     }
 
     const { error } = await supabase
@@ -119,36 +131,30 @@ export const useSupabaseWishlist = () => {
       .eq("user_id", user.id)
       .eq("product_id", productId);
     if (error) {
-      console.error("[Wishlist] removeFromWishlist - error:", error);
       throw error;
     }
-    console.log("[Wishlist] Item removed from wishlist, refreshing...");
     await fetchWishlistItems();
   };
 
   const isInWishlist = (productId: string) => {
-    const found = items.some((item) => item.id === productId);
-    console.log("[Wishlist] isInWishlist", productId, found);
-    return found;
+    // Only allow check if logged in
+    if (!user) return false;
+    return items.some((item) => item.id === productId);
   };
 
   useEffect(() => {
     fetchWishlistItems();
-    // Real-time: re-fetch on sign in/out
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(() => {
-      console.log("[Wishlist] Auth state change - refetching...");
-      fetchWishlistItems();
-    });
-    return () => subscription?.unsubscribe();
+    // Auth state change handled above - triggers refetch
   }, []);
 
   return {
     items,
     loading,
+    user,
+    canUseWishlist,
     addToWishlist,
     removeFromWishlist,
     isInWishlist,
     refetch: fetchWishlistItems,
   };
 };
-
