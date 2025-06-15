@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Menu, User, Heart, ShoppingBag, X } from 'lucide-react';
 import { useCart } from '@/contexts/CartContext';
@@ -8,8 +8,23 @@ import { Button } from '@/components/ui/button';
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [profileOpen, setProfileOpen] = useState(false);
+  const profileRef = useRef<HTMLDivElement>(null);
   const { getTotalItems } = useCart();
   const { items: wishlistItems } = useWishlist();
+
+  // Close profile dropdown when clicking outside
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (profileRef.current && !profileRef.current.contains(event.target as Node)) {
+        setProfileOpen(false);
+      }
+    }
+    if (profileOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [profileOpen]);
 
   return (
     <header className="bg-white border-b border-gray-200 sticky top-0 z-50">
@@ -39,6 +54,7 @@ const Header = () => {
 
           {/* Right side icons */}
           <div className="flex items-center space-x-4">
+            {/* Wishlist */}
             <Link to="/wishlist">
               <Button variant="ghost" size="sm" className="relative">
                 <Heart size={20} />
@@ -49,6 +65,7 @@ const Header = () => {
                 )}
               </Button>
             </Link>
+            {/* Cart */}
             <Link to="/cart">
               <Button variant="ghost" size="sm" className="relative">
                 <ShoppingBag size={20} />
@@ -59,6 +76,35 @@ const Header = () => {
                 )}
               </Button>
             </Link>
+            {/* Profile */}
+            <div ref={profileRef} className="relative">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="relative"
+                aria-label="User menu"
+                onClick={() => setProfileOpen((open) => !open)}
+              >
+                <User size={20} />
+              </Button>
+              {/* Dropdown menu */}
+              {profileOpen && (
+                <div className="absolute right-0 mt-2 w-48 rounded-lg shadow-lg bg-white border border-gray-200 z-50">
+                  <ul className="py-1">
+                    <li>
+                      <Link
+                        to="/orders"
+                        className="flex items-center px-4 py-2 hover:bg-gray-100 text-gray-700"
+                        onClick={() => setProfileOpen(false)}
+                      >
+                        Orders
+                      </Link>
+                    </li>
+                    {/* Future: Add Profile/Logout links here */}
+                  </ul>
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
@@ -75,3 +121,4 @@ const Header = () => {
 };
 
 export default Header;
+
