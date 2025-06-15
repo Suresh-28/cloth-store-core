@@ -29,13 +29,23 @@ const Header = () => {
         break;
       case 'login':
         console.log('Login clicked');
-        navigate('/admin/login');
+        navigate('/auth');
         break;
       case 'logout':
         console.log('Logout clicked');
         await signOut();
         navigate('/');
         break;
+    }
+  };
+
+  const handleUserButtonClick = () => {
+    if (!user) {
+      // Redirect to auth page for non-authenticated users
+      navigate('/auth');
+    } else {
+      // Show dropdown for authenticated users
+      setIsUserMenuOpen(!isUserMenuOpen);
     }
   };
 
@@ -71,49 +81,37 @@ const Header = () => {
               <Button 
                 variant="ghost" 
                 size="sm"
-                onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+                onClick={handleUserButtonClick}
               >
                 <User size={20} />
               </Button>
               
-              {/* User Dropdown Menu */}
-              {isUserMenuOpen && (
+              {/* User Dropdown Menu - only show for authenticated users */}
+              {isUserMenuOpen && user && (
                 <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-md shadow-lg z-50">
                   <div className="py-1">
-                    {user ? (
-                      <>
-                        <button
-                          onClick={() => handleUserAction('orders')}
-                          className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left"
-                        >
-                          <Receipt size={16} className="mr-2" />
-                          Orders
-                        </button>
-                        <button
-                          onClick={() => handleUserAction('profile')}
-                          className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left"
-                        >
-                          <UserCircle size={16} className="mr-2" />
-                          Profile
-                        </button>
-                        <div className="border-t border-gray-100"></div>
-                        <button
-                          onClick={() => handleUserAction('logout')}
-                          className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left"
-                        >
-                          <LogOut size={16} className="mr-2" />
-                          Sign Out
-                        </button>
-                      </>
-                    ) : (
-                      <button
-                        onClick={() => handleUserAction('login')}
-                        className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left"
-                      >
-                        <UserCircle size={16} className="mr-2" />
-                        Admin Login
-                      </button>
-                    )}
+                    <button
+                      onClick={() => handleUserAction('orders')}
+                      className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left"
+                    >
+                      <Receipt size={16} className="mr-2" />
+                      Orders
+                    </button>
+                    <button
+                      onClick={() => handleUserAction('profile')}
+                      className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left"
+                    >
+                      <UserCircle size={16} className="mr-2" />
+                      Profile
+                    </button>
+                    <div className="border-t border-gray-100"></div>
+                    <button
+                      onClick={() => handleUserAction('logout')}
+                      className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left"
+                    >
+                      <LogOut size={16} className="mr-2" />
+                      Sign Out
+                    </button>
                   </div>
                 </div>
               )}
