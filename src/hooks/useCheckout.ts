@@ -31,66 +31,170 @@ export const useCheckout = () => {
   const { items, getTotalPrice } = useCart();
   const { addOrder } = useOrders();
 
-  // Load saved contact information on mount
+  // Load saved contact info on mount, but for guests defer until email is entered!
   useEffect(() => {
     loadSavedContactInfo();
   }, []);
 
-  const loadSavedContactInfo = async () => {
+  // Loads saved info for the current session: user or guest (if email entered)
+  const loadSavedContactInfo = async (maybeEmail?: string) => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
 
-      // Try to get from user profile first
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', user.id)
-        .single();
+      // If logged in, use user_id
+      if (user) {
+        // Try checkout_infos first (new way)
+        const { data: checkoutInfo } = await supabase
+          .from('checkout_infos')
+          .select('*')
+          .eq('user_id', user.id)
+          .maybeSingle();
 
-      if (profile) {
-        setSavedContactInfo(prev => ({
-          ...prev,
-          email: profile.email || user.email || '',
-          firstName: profile.full_name?.split(' ')[0] || '',
-          lastName: profile.full_name?.split(' ').slice(1).join(' ') || '',
-          phone: profile.phone || ''
-        }));
+        if (checkoutInfo) {
+          setSavedContactInfo(prev => ({
+            ...prev,
+            email: checkoutInfo.email || user.email || '',
+            firstName: checkoutInfo.first_name || '',
+            lastName: checkoutInfo.last_name || '',
+            address: checkoutInfo.address || '',
+            city: checkoutInfo.city || '',
+            postalCode: checkoutInfo.postal_code || '',
+            country: checkoutInfo.country || 'United Kingdom',
+            phone: checkoutInfo.phone || ''
+          }));
+          return;
+        }
+        // Fallback: Try to get from user profile (legacy)
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', user.id)
+          .single();
+
+        if (profile) {
+          setSavedContactInfo(prev => ({
+            ...prev,
+            email: profile.email || user.email || '',
+            firstName: profile.full_name?.split(' ')[0] || '',
+            lastName: profile.full_name?.split(' ').slice(1).join(' ') || '',
+            phone: profile.phone || ''
+          }));
+        }
+
+        // Optionally get most recent shipping info from orders (fallback)
+        const { data: recentOrder } = await supabase
+          .from('orders')
+          .select('shipping_address')
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .single();
+
+        if (recentOrder?.shipping_address) {
+          const shippingAddr = recentOrder.shipping_address as any;
+          setSavedContactInfo(prev => ({
+            ...prev,
+            address: shippingAddr.address || '',
+            city: shippingAddr.city || '',
+            postalCode: shippingAddr.postalCode || '',
+            country: shippingAddr.country || 'United Kingdom'
+          }));
+        }
+        return;
       }
 
-      // Try to get the most recent order's shipping info
-      const { data: recentOrder } = await supabase
-        .from('orders')
-        .select('shipping_address')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .single();
+      // Guest: try fetching checkout info by email (if provided)
+      const guestEmail = maybeEmail || savedContactInfo.email;
+      if (guestEmail) {
+        const { data: checkoutInfo } = await supabase
+          .from('checkout_infos')
+          .select('*')
+          .eq('email', guestEmail)
+          .is('user_id', null)
+          .maybeSingle();
 
-      if (recentOrder?.shipping_address) {
-        const shippingAddr = recentOrder.shipping_address as any;
-        setSavedContactInfo(prev => ({
-          ...prev,
-          address: shippingAddr.address || '',
-          city: shippingAddr.city || '',
-          postalCode: shippingAddr.postalCode || '',
-          country: shippingAddr.country || 'United Kingdom'
-        }));
+        if (checkoutInfo) {
+          setSavedContactInfo(prev => ({
+            ...prev,
+            email: checkoutInfo.email || '',
+            firstName: checkoutInfo.first_name || '',
+            lastName: checkoutInfo.last_name || '',
+            address: checkoutInfo.address || '',
+            city: checkoutInfo.city || '',
+            postalCode: checkoutInfo.postal_code || '',
+            country: checkoutInfo.country || 'United Kingdom',
+            phone: checkoutInfo.phone || ''
+          }));
+        }
       }
-
-      console.log('Loaded saved contact info:', savedContactInfo);
     } catch (error) {
       console.error('Error loading saved contact info:', error);
     }
   };
 
-  // Updated to allow guest (unauthenticated) checkout
-  const saveCheckoutData = async (formData: CheckoutFormData) => {
-    setIsSubmitting(true);
+  // When guest enters a different email, auto-look up info and populate
+  const handleGuestEmailChange = async (email: string) => {
+    await loadSavedContactInfo(email);
+  };
+
+  // Save checkout info for user or guest. Does NOT block checkout if this fails.
+  const saveCheckoutContactInfo = async (formData: CheckoutFormData) => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
 
-      // If user is logged in, update their profile
+      if (user) {
+        // Upsert for logged in user using user_id
+        await supabase
+          .from('checkout_infos')
+          .upsert({
+            user_id: user.id,
+            email: formData.email,
+            first_name: formData.firstName,
+            last_name: formData.lastName,
+            address: formData.address,
+            city: formData.city,
+            postal_code: formData.postalCode,
+            country: formData.country,
+            phone: formData.phone,
+            updated_at: new Date().toISOString()
+          })
+          .select()
+          .single();
+      } else if (formData.email) {
+        // Upsert for guest by email (user_id null)
+        await supabase
+          .from('checkout_infos')
+          .upsert({
+            email: formData.email,
+            first_name: formData.firstName,
+            last_name: formData.lastName,
+            address: formData.address,
+            city: formData.city,
+            postal_code: formData.postalCode,
+            country: formData.country,
+            phone: formData.phone,
+            updated_at: new Date().toISOString()
+            // user_id omitted to ensure is null
+          })
+          .select()
+          .single();
+      }
+    } catch (error) {
+      // Suppress error, not critical to block checkout
+      console.error('Failed to save checkout info', error);
+    }
+  };
+
+  // saveCheckoutData now also upserts to checkout_infos
+  const saveCheckoutData = async (formData: CheckoutFormData) => {
+    setIsSubmitting(true);
+    try {
+      // Upsert checkout info for autofill next time
+      await saveCheckoutContactInfo(formData);
+
+      const { data: { user } } = await supabase.auth.getUser();
+
+      // If user is logged in, update their profile too (legacy)
       if (user) {
         await supabase
           .from('profiles')
@@ -221,6 +325,7 @@ export const useCheckout = () => {
     saveCheckoutData,
     isSubmitting,
     savedContactInfo,
-    loadSavedContactInfo
+    loadSavedContactInfo,
+    handleGuestEmailChange
   };
 };
