@@ -6,14 +6,12 @@ import SizeGuide from '@/components/SizeGuide';
 import ShippingInfo from '@/components/ShippingInfo';
 import Contact from '@/components/Contact';
 import { useProducts } from '@/contexts/ProductsContext';
-import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 
 const Index = () => {
   const { products } = useProducts();
-  const { user } = useAuth();
   const featuredProducts = products.slice(0, 4);
   const [showSizeGuide, setShowSizeGuide] = useState(false);
   const [showShippingInfo, setShowShippingInfo] = useState(false);
