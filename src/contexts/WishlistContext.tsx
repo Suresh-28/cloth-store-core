@@ -1,7 +1,8 @@
 
 import React, { createContext, useContext, ReactNode } from "react";
-import { useSupabaseWishlist } from "@/hooks/useSupabaseWishlist";
+import { useSupabaseWishlist, SupabaseWishlistItem } from "@/hooks/useSupabaseWishlist";
 
+// WishlistItem matches what ProductCard etc expects. Now same as SupabaseWishlistItem.
 export interface WishlistItem {
   id: string;
   name: string;
@@ -16,7 +17,7 @@ interface WishlistContextType {
   loading: boolean;
   user: any;
   canUseWishlist: boolean;
-  addToWishlist: (id: string) => Promise<void>;
+  addToWishlist: (id: string, meta?: Partial<WishlistItem>) => Promise<void>;
   removeFromWishlist: (id: string) => Promise<void>;
   isInWishlist: (id: string) => boolean;
   refetch: () => Promise<void>;
@@ -25,13 +26,6 @@ interface WishlistContextType {
 const WishlistContext = createContext<WishlistContextType | undefined>(undefined);
 
 export const WishlistProvider = ({ children }: { children: ReactNode }) => {
-  // Defensive: log on every render to help debug
-  if (typeof window !== "undefined") {
-    // Only log client-side to avoid SSR noise
-    console.log(
-      "[WishlistProvider] rendered (children present: " + !!children + ")"
-    );
-  }
   const {
     items,
     loading,
@@ -43,6 +37,7 @@ export const WishlistProvider = ({ children }: { children: ReactNode }) => {
     refetch,
   } = useSupabaseWishlist();
 
+  // Note: for guests, addToWishlist must receive meta information.
   return (
     <WishlistContext.Provider
       value={{
@@ -63,23 +58,17 @@ export const WishlistProvider = ({ children }: { children: ReactNode }) => {
 
 export const useWishlist = () => {
   const context = useContext(WishlistContext);
-  // Defensive fallback for production: never crash the UI, offer a user-reload instead
   if (!context) {
     if (typeof window !== "undefined") {
-      console.error(
-        "[WishlistContext] useWishlist() called outside provider. " +
-        "Try refreshing the page. If it persists, check <WishlistProvider> wraps your App in src/App.tsx."
-      );
-      // Only throw error if not hot reload, fallback to empty context so UI can still render
+      // Defensive: avoid crashing in prod, but crash in dev for easier debugging
       if (import.meta.env.DEV) {
-        // In dev, force a crash for easier debugging
         throw new Error(
           "useWishlist must be used within a WishlistProvider.\n" +
           "If this happened after a hot reload, try a hard refresh of your browser.\n" +
           "If this persists after full reload, check that <WishlistProvider> is present in src/App.tsx."
         );
       }
-      // In production, don't crash the whole app
+      // production fallback
       return {
         items: [],
         loading: false,
@@ -91,7 +80,6 @@ export const useWishlist = () => {
         refetch: async () => {},
       };
     }
-    // On server, just crash (shouldn't happen)
     throw new Error("useWishlist must be used within a WishlistProvider");
   }
   return context;

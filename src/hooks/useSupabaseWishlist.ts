@@ -11,12 +11,29 @@ export interface SupabaseWishlistItem {
   product_id: string;
 }
 
+// Local Storage Key
+const GUEST_WISHLIST_KEY = "guest_wishlist_items";
+
+function getGuestWishlist(): SupabaseWishlistItem[] {
+  try {
+    const raw = localStorage.getItem(GUEST_WISHLIST_KEY);
+    if (!raw) return [];
+    return JSON.parse(raw) as SupabaseWishlistItem[];
+  } catch {
+    return [];
+  }
+}
+
+function saveGuestWishlist(items: SupabaseWishlistItem[]) {
+  localStorage.setItem(GUEST_WISHLIST_KEY, JSON.stringify(items));
+}
+
 export const useSupabaseWishlist = () => {
   const [items, setItems] = useState<SupabaseWishlistItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<any>(null);
 
-  // On mount, get current user and listen for changes
+  // On mount: get current user and listen for changes
   useEffect(() => {
     let mounted = true;
     const fetchAuth = async () => {
@@ -37,19 +54,22 @@ export const useSupabaseWishlist = () => {
     // eslint-disable-next-line
   }, []);
 
-  const canUseWishlist = !!user;
+  const canUseWishlist = true; // always true now (for guests + users)
 
+  // Unified fetch – uses localStorage fallback if not logged in
   const fetchWishlistItems = async () => {
     setLoading(true);
     try {
-      const { data: { user: currentUser }, error: userErr } = await supabase.auth.getUser();
-      // sync user state if they log out/in during lifetime
+      const { data: { user: currentUser } } = await supabase.auth.getUser();
       setUser(currentUser || null);
       if (!currentUser) {
-        setItems([]);
+        // guest mode: use localStorage wishlist
+        const guestItems = getGuestWishlist();
+        setItems(guestItems);
         setLoading(false);
         return;
       }
+      // Logged-in: fetch from Supabase as before
       const { data, error } = await supabase
         .from("wishlist_items")
         .select(`
@@ -91,15 +111,36 @@ export const useSupabaseWishlist = () => {
     }
   };
 
-  const addToWishlist = async (productId: string) => {
-    if (!user) {
-      throw new Error("Please login to use the wishlist.");
+  // Add to wishlist (works for both: guest localStorage vs Supabase)
+  const addToWishlist = async (productId: string, productMeta?: Partial<SupabaseWishlistItem>) => {
+    const { data: { user: currentUser } } = await supabase.auth.getUser();
+    if (!currentUser) {
+      // Guest: add/update to localStorage (need product info)
+      if (!productMeta) return;
+      let guestItems = getGuestWishlist();
+      if (!guestItems.some(item => item.id === productId)) {
+        guestItems = [
+          ...guestItems, {
+            id: productId,
+            name: productMeta.name ?? '',
+            price: productMeta.price ?? 0,
+            image: productMeta.image ?? '',
+            // optional fields:
+            originalPrice: productMeta.originalPrice,
+            discount: productMeta.discount,
+            product_id: productId,
+          }
+        ];
+        saveGuestWishlist(guestItems);
+      }
+      setItems(guestItems);
+      return;
     }
-    // Insert only if not already wishlisted
+    // Real user: use backend
     const { data: existing, error: existingError } = await supabase
       .from("wishlist_items")
       .select("*")
-      .eq("user_id", user.id)
+      .eq("user_id", currentUser.id)
       .eq("product_id", productId);
 
     if (existingError) {
@@ -107,28 +148,33 @@ export const useSupabaseWishlist = () => {
     }
 
     if (existing && existing.length > 0) {
-      // already added
+      await fetchWishlistItems();
       return;
     }
 
     const { error } = await supabase
       .from("wishlist_items")
-      .insert([{ user_id: user.id, product_id: productId }]);
+      .insert([{ user_id: currentUser.id, product_id: productId }]);
     if (error) {
       throw error;
     }
     await fetchWishlistItems();
   };
 
+  // Remove from wishlist (guest or real)
   const removeFromWishlist = async (productId: string) => {
-    if (!user) {
-      throw new Error("Please login to use the wishlist.");
+    const { data: { user: currentUser } } = await supabase.auth.getUser();
+    if (!currentUser) {
+      let guestItems = getGuestWishlist();
+      guestItems = guestItems.filter(item => item.id !== productId);
+      saveGuestWishlist(guestItems);
+      setItems(guestItems);
+      return;
     }
-
     const { error } = await supabase
       .from("wishlist_items")
       .delete()
-      .eq("user_id", user.id)
+      .eq("user_id", currentUser.id)
       .eq("product_id", productId);
     if (error) {
       throw error;
@@ -136,9 +182,8 @@ export const useSupabaseWishlist = () => {
     await fetchWishlistItems();
   };
 
+  // Check if product is wishlisted (guest or real user)
   const isInWishlist = (productId: string) => {
-    // Only allow check if logged in
-    if (!user) return false;
     return items.some((item) => item.id === productId);
   };
 
