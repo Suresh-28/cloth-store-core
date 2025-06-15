@@ -1,6 +1,5 @@
 
-import React, { createContext, useContext, ReactNode } from 'react';
-import { useSupabaseCart } from '@/hooks/useSupabaseCart';
+import React, { createContext, useContext, ReactNode, useState, useEffect } from 'react';
 
 export interface CartItem {
   id: string;
@@ -26,16 +25,70 @@ interface CartContextType {
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
 export const CartProvider = ({ children }: { children: ReactNode }) => {
-  const {
-    items,
-    loading,
-    addToCart,
-    removeFromCart,
-    updateQuantity,
-    clearCart,
-    getTotalItems,
-    getTotalPrice
-  } = useSupabaseCart();
+  const [items, setItems] = useState<CartItem[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  // Load cart from localStorage on mount
+  useEffect(() => {
+    const savedCart = localStorage.getItem('cart');
+    if (savedCart) {
+      setItems(JSON.parse(savedCart));
+    }
+  }, []);
+
+  // Save to localStorage whenever items change
+  useEffect(() => {
+    localStorage.setItem('cart', JSON.stringify(items));
+  }, [items]);
+
+  const addToCart = async (newItem: Omit<CartItem, 'quantity'>) => {
+    setItems(prev => {
+      const existingItem = prev.find(
+        item => item.id === newItem.id && item.size === newItem.size && item.color === newItem.color
+      );
+
+      if (existingItem) {
+        return prev.map(item =>
+          item.id === newItem.id && item.size === newItem.size && item.color === newItem.color
+            ? { ...item, quantity: item.quantity + 1 }
+            : item
+        );
+      }
+
+      return [...prev, { ...newItem, quantity: 1 }];
+    });
+  };
+
+  const removeFromCart = async (id: string, size: string, color: string) => {
+    setItems(prev => prev.filter(
+      item => !(item.id === id && item.size === size && item.color === color)
+    ));
+  };
+
+  const updateQuantity = async (id: string, size: string, color: string, quantity: number) => {
+    if (quantity <= 0) {
+      await removeFromCart(id, size, color);
+      return;
+    }
+
+    setItems(prev => prev.map(item =>
+      item.id === id && item.size === size && item.color === color
+        ? { ...item, quantity }
+        : item
+    ));
+  };
+
+  const clearCart = async () => {
+    setItems([]);
+  };
+
+  const getTotalItems = () => {
+    return items.reduce((total, item) => total + item.quantity, 0);
+  };
+
+  const getTotalPrice = () => {
+    return items.reduce((total, item) => total + (item.price * item.quantity), 0);
+  };
 
   return (
     <CartContext.Provider value={{

@@ -1,53 +1,15 @@
 
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { Menu, User, Heart, ShoppingBag, X, UserCircle, LogOut, Receipt } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { Menu, User, Heart, ShoppingBag, X } from 'lucide-react';
 import { useCart } from '@/contexts/CartContext';
 import { useWishlist } from '@/contexts/WishlistContext';
 import { Button } from '@/components/ui/button';
-import { useAuth } from '@/contexts/AuthContext';
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const { getTotalItems } = useCart();
   const { items: wishlistItems } = useWishlist();
-  const { user, signOut } = useAuth();
-  const navigate = useNavigate();
-
-  const handleUserAction = async (action: string) => {
-    setIsUserMenuOpen(false);
-    // Handle different user actions
-    switch (action) {
-      case 'orders':
-        console.log('Orders clicked');
-        navigate('/orders');
-        break;
-      case 'profile':
-        console.log('Profile clicked');
-        navigate('/profile');
-        break;
-      case 'login':
-        console.log('Login clicked');
-        navigate('/auth');
-        break;
-      case 'logout':
-        console.log('Logout clicked');
-        await signOut();
-        navigate('/');
-        break;
-    }
-  };
-
-  const handleUserButtonClick = () => {
-    if (!user) {
-      // Redirect to auth page for non-authenticated users
-      navigate('/auth');
-    } else {
-      // Show dropdown for authenticated users
-      setIsUserMenuOpen(!isUserMenuOpen);
-    }
-  };
 
   return (
     <header className="bg-white border-b border-gray-200 sticky top-0 z-50">
@@ -71,52 +33,12 @@ const Header = () => {
             <span className="text-xl font-medium text-gray-900">Loom & Co.</span>
           </Link>
 
-          {/* Desktop Navigation - removed Shop link */}
+          {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center space-x-8">
           </nav>
 
           {/* Right side icons */}
           <div className="flex items-center space-x-4">
-            <div className="relative">
-              <Button 
-                variant="ghost" 
-                size="sm"
-                onClick={handleUserButtonClick}
-              >
-                <User size={20} />
-              </Button>
-              
-              {/* User Dropdown Menu - only show for authenticated users */}
-              {isUserMenuOpen && user && (
-                <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-md shadow-lg z-50">
-                  <div className="py-1">
-                    <button
-                      onClick={() => handleUserAction('orders')}
-                      className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left"
-                    >
-                      <Receipt size={16} className="mr-2" />
-                      Orders
-                    </button>
-                    <button
-                      onClick={() => handleUserAction('profile')}
-                      className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left"
-                    >
-                      <UserCircle size={16} className="mr-2" />
-                      Profile
-                    </button>
-                    <div className="border-t border-gray-100"></div>
-                    <button
-                      onClick={() => handleUserAction('logout')}
-                      className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left"
-                    >
-                      <LogOut size={16} className="mr-2" />
-                      Sign Out
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
-            
             <Link to="/wishlist">
               <Button variant="ghost" size="sm" className="relative">
                 <Heart size={20} />
@@ -140,7 +62,7 @@ const Header = () => {
           </div>
         </div>
 
-        {/* Mobile Navigation - removed Shop link */}
+        {/* Mobile Navigation */}
         {isMenuOpen && (
           <div className="md:hidden pb-4">
             <nav className="flex flex-col space-y-4">
@@ -148,14 +70,6 @@ const Header = () => {
           </div>
         )}
       </div>
-      
-      {/* Overlay to close user menu when clicking outside */}
-      {isUserMenuOpen && (
-        <div 
-          className="fixed inset-0 z-40" 
-          onClick={() => setIsUserMenuOpen(false)}
-        ></div>
-      )}
     </header>
   );
 };
