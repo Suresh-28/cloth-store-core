@@ -12,6 +12,11 @@ import { useWishlist } from '@/contexts/WishlistContext';
 import { toast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 
+const cleanImage = (image: string) => {
+  if (!image || image.startsWith("data:")) return "";
+  return image;
+};
+
 const ProductDetail = () => {
   const { id } = useParams();
   const { products } = useProducts();
@@ -46,7 +51,7 @@ const ProductDetail = () => {
 
   const inWishlist = isInWishlist(product.id);
 
-  const handleAddToCart = () => {
+  const handleAddToCart = async () => {
     if (!selectedSize) {
       toast({ title: "Please select a size", variant: "destructive" });
       return;
@@ -55,33 +60,61 @@ const ProductDetail = () => {
       toast({ title: "Please select a color", variant: "destructive" });
       return;
     }
-
-    addToCart({
-      id: product.id,
-      name: product.name,
-      price: product.price,
-      image: product.image,
-      size: selectedSize,
-      color: selectedColor
-    });
-
-    toast({ title: "Added to cart!" });
-  };
-
-  const handleWishlistToggle = () => {
-    if (inWishlist) {
-      removeFromWishlist(product.id);
-      toast({ title: "Removed from wishlist" });
-    } else {
-      addToWishlist({
+    try {
+      await addToCart({
         id: product.id,
         name: product.name,
         price: product.price,
-        image: product.image,
-        originalPrice: product.originalPrice,
-        discount: product.discount
+        image: cleanImage(product.image),
+        size: selectedSize,
+        color: selectedColor
       });
-      toast({ title: "Added to wishlist!" });
+      toast({ title: "Added to cart!" });
+    } catch (error: any) {
+      if (error?.message?.includes("quota")) {
+        toast({
+          title: "Cart storage full",
+          description: "Your cart couldn't be saved because your browser storage is full.",
+          variant: "destructive"
+        });
+      } else {
+        toast({
+          title: "Failed to add to cart",
+          variant: "destructive"
+        });
+      }
+    }
+  };
+
+  const handleWishlistToggle = async () => {
+    try {
+      if (inWishlist) {
+        await removeFromWishlist(product.id);
+        toast({ title: "Removed from wishlist" });
+      } else {
+        await addToWishlist({
+          id: product.id,
+          name: product.name,
+          price: product.price,
+          image: cleanImage(product.image),
+          originalPrice: product.originalPrice,
+          discount: product.discount
+        });
+        toast({ title: "Added to wishlist!" });
+      }
+    } catch (error: any) {
+      if (error?.message?.includes("quota")) {
+        toast({
+          title: "Wishlist storage full",
+          description: "Your wishlist couldn't be saved because your browser storage is full.",
+          variant: "destructive"
+        });
+      } else {
+        toast({
+          title: "Failed to update wishlist",
+          variant: "destructive"
+        });
+      }
     }
   };
 
@@ -299,3 +332,5 @@ const ProductDetail = () => {
 };
 
 export default ProductDetail;
+
+// Note: This file is getting quite long (over 300 lines). It's a good idea to consider refactoring it into smaller files/components after this!

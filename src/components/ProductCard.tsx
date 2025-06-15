@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Heart, ShoppingBag, Star } from 'lucide-react';
@@ -20,6 +19,12 @@ interface ProductCardProps {
   colors?: string[];
   isNew?: boolean;
 }
+
+const cleanImage = (image: string) => {
+  // Only use image URL, not base64 blobs for localStorage storage
+  if (!image || image.startsWith("data:")) return ""; // skip base64
+  return image;
+};
 
 const ProductCard = ({
   id,
@@ -44,22 +49,28 @@ const ProductCard = ({
         id,
         name,
         price,
-        image,
-        size: 'M', // Default size
+        image: cleanImage(image),
+        size: 'M',
         color: colors[0] || 'Default'
       });
-      
       toast({
         title: "Added to cart!",
         description: `${name} has been added to your cart.`
       });
-    } catch (error) {
-      console.error('Error adding to cart:', error);
-      toast({
-        title: "Error",
-        description: "Failed to add item to cart. Please try again.",
-        variant: "destructive"
-      });
+    } catch (error: any) {
+      if (error?.message?.includes("quota")) {
+        toast({
+          title: "Cart storage full",
+          description: "Your cart couldn't be saved because your browser storage is full.",
+          variant: "destructive"
+        });
+      } else {
+        toast({
+          title: "Error",
+          description: "Failed to add item to cart. Please try again.",
+          variant: "destructive"
+        });
+      }
     }
   };
 
@@ -76,7 +87,7 @@ const ProductCard = ({
           id,
           name,
           price,
-          image,
+          image: cleanImage(image),
           originalPrice,
           discount
         });
@@ -85,13 +96,20 @@ const ProductCard = ({
           description: `${name} has been added to your wishlist.`
         });
       }
-    } catch (error) {
-      console.error('Error toggling wishlist:', error);
-      toast({
-        title: "Error",
-        description: "Failed to update wishlist. Please try again.",
-        variant: "destructive"
-      });
+    } catch (error: any) {
+      if (error?.message?.includes("quota")) {
+        toast({
+          title: "Wishlist storage full",
+          description: "Your wishlist couldn't be saved because your browser storage is full.",
+          variant: "destructive"
+        });
+      } else {
+        toast({
+          title: "Error",
+          description: "Failed to update wishlist. Please try again.",
+          variant: "destructive"
+        });
+      }
     }
   };
 

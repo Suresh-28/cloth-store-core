@@ -48,9 +48,10 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
         console.error(
           'Local storage quota exceeded! Cart has been cleared. Please contact support if this continues.'
         );
+        throw new Error('quota error: cart could not be saved');
       } else {
-        // Unexpected error, log and skip
         console.error('Failed to save cart to localStorage', error);
+        throw error;
       }
     }
   }, [items]);

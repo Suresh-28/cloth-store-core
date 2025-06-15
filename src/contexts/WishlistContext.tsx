@@ -57,8 +57,10 @@ export const WishlistProvider = ({ children }: { children: ReactNode }) => {
     try {
       localStorage.setItem('wishlist', JSON.stringify(items));
       console.log('[WishlistContext] Wishlist saved to localStorage:', items);
-    } catch (err) {
+    } catch (err: any) {
       console.error('[WishlistContext] Failed to save wishlist to localStorage:', err);
+      // Propagate error for callbacks to catch and maybe show a toast
+      throw new Error('quota error: wishlist could not be saved');
     }
   }, [items]);
 
