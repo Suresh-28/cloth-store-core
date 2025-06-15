@@ -20,6 +20,7 @@ import Payment from "./pages/Payment";
 import PaymentSuccess from "./pages/PaymentSuccess";
 import Orders from "./pages/Orders";
 import Profile from "./pages/Profile";
+import Auth from "./pages/Auth";
 import AdminLogin from "./pages/auth/AdminLogin";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminProducts from "./pages/admin/AdminProducts";
@@ -45,6 +46,7 @@ const App = () => (
                 <BrowserRouter>
                   <Routes>
                     <Route path="/" element={<Index />} />
+                    <Route path="/auth" element={<Auth />} />
                     <Route path="/products" element={<Products />} />
                     <Route path="/products/:id" element={<ProductDetail />} />
                     <Route path="/cart" element={<Cart />} />

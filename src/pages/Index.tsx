@@ -6,12 +6,14 @@ import SizeGuide from '@/components/SizeGuide';
 import ShippingInfo from '@/components/ShippingInfo';
 import Contact from '@/components/Contact';
 import { useProducts } from '@/contexts/ProductsContext';
+import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 
 const Index = () => {
   const { products } = useProducts();
+  const { user } = useAuth();
   const featuredProducts = products.slice(0, 4);
   const [showSizeGuide, setShowSizeGuide] = useState(false);
   const [showShippingInfo, setShowShippingInfo] = useState(false);
@@ -78,11 +80,20 @@ const Index = () => {
           <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
             Discover our collection of premium t-shirts crafted with care and attention to detail
           </p>
-          <Link to="/products">
-            <Button size="lg" className="bg-black hover:bg-gray-800 text-white px-8 py-3">
-              Shop Collection
-            </Button>
-          </Link>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+            <Link to="/products">
+              <Button size="lg" className="bg-black hover:bg-gray-800 text-white px-8 py-3">
+                Shop Collection
+              </Button>
+            </Link>
+            {!user && (
+              <Link to="/auth">
+                <Button size="lg" variant="outline" className="px-8 py-3">
+                  Sign In
+                </Button>
+              </Link>
+            )}
+          </div>
         </div>
       </section>
 
