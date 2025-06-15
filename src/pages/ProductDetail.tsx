@@ -93,14 +93,7 @@ const ProductDetail = () => {
         await removeFromWishlist(product.id);
         toast({ title: "Removed from wishlist" });
       } else {
-        await addToWishlist({
-          id: product.id,
-          name: product.name,
-          price: product.price,
-          image: cleanImage(product.image),
-          originalPrice: product.originalPrice,
-          discount: product.discount
-        });
+        await addToWishlist(product.id);
         toast({ title: "Added to wishlist!" });
       }
     } catch (error: any) {

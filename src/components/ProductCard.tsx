@@ -82,14 +82,7 @@ const ProductCard = ({
           description: `${name} has been removed from your wishlist.`,
         });
       } else {
-        await addToWishlist({
-          id,
-          name,
-          price,
-          image: cleanImage(image),
-          originalPrice,
-          discount,
-        });
+        await addToWishlist(id);
         toast({
           title: "Added to wishlist!",
           description: `${name} has been added to your wishlist.`,
