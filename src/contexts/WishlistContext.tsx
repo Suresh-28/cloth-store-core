@@ -1,4 +1,5 @@
-import React, { createContext, useContext, ReactNode, useState, useEffect } from 'react';
+
+import React, { createContext, useContext, ReactNode, useState, useEffect, useRef } from 'react';
 
 export interface WishlistItem {
   id: string;
@@ -22,6 +23,7 @@ const WishlistContext = createContext<WishlistContextType | undefined>(undefined
 export const WishlistProvider = ({ children }: { children: ReactNode }) => {
   const [items, setItems] = useState<WishlistItem[]>([]);
   const [loading, setLoading] = useState(false);
+  const isInitialLoad = useRef(true);
 
   // Load wishlist from localStorage on mount
   useEffect(() => {
@@ -41,13 +43,15 @@ export const WishlistProvider = ({ children }: { children: ReactNode }) => {
       console.error('Error loading wishlist from localStorage:', error);
       // Clear corrupted data
       localStorage.removeItem('wishlist');
+    } finally {
+      isInitialLoad.current = false;
     }
   }, []);
 
-  // Save to localStorage whenever items change
+  // Save to localStorage whenever items change (but not on initial load)
   useEffect(() => {
-    // Don't save on initial load when items is empty
-    if (items.length === 0) return;
+    // Skip saving during initial load
+    if (isInitialLoad.current) return;
     
     try {
       localStorage.setItem('wishlist', JSON.stringify(items));
