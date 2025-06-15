@@ -31,16 +31,20 @@ export const WishlistProvider = ({ children }: { children: ReactNode }) => {
     setLoading(true);
     try {
       const savedWishlist = localStorage.getItem('wishlist');
+      console.log('[WishlistContext] LocalStorage loaded:', savedWishlist);
       if (savedWishlist) {
         const parsedWishlist = JSON.parse(savedWishlist);
         if (Array.isArray(parsedWishlist)) {
           setItems(parsedWishlist);
+          console.log('[WishlistContext] Wishlist loaded from localStorage:', parsedWishlist);
         } else {
           localStorage.removeItem('wishlist');
+          console.warn('[WishlistContext] wishlist format is invalid, clearing localStorage key.');
         }
       }
-    } catch {
+    } catch (err) {
       localStorage.removeItem('wishlist');
+      console.error('[WishlistContext] Error parsing wishlist from localStorage, cleared key. Error:', err);
     } finally {
       isInitialLoad.current = false;
       setLoading(false);
@@ -52,20 +56,28 @@ export const WishlistProvider = ({ children }: { children: ReactNode }) => {
     if (isInitialLoad.current) return;
     try {
       localStorage.setItem('wishlist', JSON.stringify(items));
-    } catch {
-      // fail silently
+      console.log('[WishlistContext] Wishlist saved to localStorage:', items);
+    } catch (err) {
+      console.error('[WishlistContext] Failed to save wishlist to localStorage:', err);
     }
   }, [items]);
 
   const addToWishlist = async (item: WishlistItem) => {
     setItems(prev => {
-      if (prev.find(i => i.id === item.id)) return prev;
+      if (prev.find(i => i.id === item.id)) {
+        console.log('[WishlistContext] Item already in wishlist, no action:', item.id);
+        return prev;
+      }
+      console.log('[WishlistContext] Adding to wishlist:', item);
       return [...prev, item];
     });
   };
 
   const removeFromWishlist = async (id: string) => {
-    setItems(prev => prev.filter(item => item.id !== id));
+    setItems(prev => {
+      console.log('[WishlistContext] Removing from wishlist:', id);
+      return prev.filter(item => item.id !== id);
+    });
   };
 
   const isInWishlist = (id: string) => {
@@ -76,6 +88,7 @@ export const WishlistProvider = ({ children }: { children: ReactNode }) => {
     setLoading(true);
     try {
       const savedWishlist = localStorage.getItem('wishlist');
+      console.log('[WishlistContext] Refetching from localStorage:', savedWishlist);
       if (savedWishlist) {
         const parsedWishlist = JSON.parse(savedWishlist);
         if (Array.isArray(parsedWishlist)) {
@@ -87,8 +100,9 @@ export const WishlistProvider = ({ children }: { children: ReactNode }) => {
       } else {
         setItems([]);
       }
-    } catch {
+    } catch (err) {
       setItems([]);
+      console.error('[WishlistContext] Refetch error:', err);
     } finally {
       setLoading(false);
     }
@@ -117,3 +131,5 @@ export const useWishlist = () => {
   }
   return context;
 };
+
+// ... done! The only changes are added console.log for debugging.
