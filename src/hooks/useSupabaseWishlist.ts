@@ -19,8 +19,10 @@ export const useSupabaseWishlist = () => {
   const fetchWishlistItems = async () => {
     setLoading(true);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const { data: { user }, error: userErr } = await supabase.auth.getUser();
+      console.log("[Wishlist] fetchWishlistItems - user", user, userErr);
       if (!user) {
+        console.warn("[Wishlist] No user - returning empty items.");
         setItems([]);
         return;
       }
@@ -42,7 +44,7 @@ export const useSupabaseWishlist = () => {
         .eq("user_id", user.id);
 
       if (error) {
-        console.error("Error fetching wishlist:", error);
+        console.error("[Wishlist] Error fetching wishlist:", error);
         setItems([]);
         return;
       }
@@ -57,7 +59,12 @@ export const useSupabaseWishlist = () => {
         product_id: item.product_id,
       }));
 
+      console.log("[Wishlist] Items after fetch:", wishlistItems);
+
       setItems(wishlistItems);
+    } catch (err) {
+      console.error("[Wishlist] fetchWishlistItems unexpected error:", err);
+      setItems([]);
     } finally {
       setLoading(false);
     }
@@ -65,7 +72,11 @@ export const useSupabaseWishlist = () => {
 
   const addToWishlist = async (productId: string) => {
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) throw new Error("You must be logged in to use the wishlist.");
+    console.log("[Wishlist] addToWishlist - user", user, productId);
+    if (!user) {
+      console.error("[Wishlist] You must be logged in to use the wishlist.");
+      throw new Error("You must be logged in to use the wishlist.");
+    }
     // Insert only if not already wishlisted
     const { data: existing, error: existingError } = await supabase
       .from("wishlist_items")
@@ -73,40 +84,59 @@ export const useSupabaseWishlist = () => {
       .eq("user_id", user.id)
       .eq("product_id", productId);
 
-    if (existingError) throw existingError;
+    if (existingError) {
+      console.error("[Wishlist] addToWishlist - check existing error:", existingError);
+      throw existingError;
+    }
 
     if (existing && existing.length > 0) {
+      console.log("[Wishlist] Item already in wishlist, not adding.", existing);
       return; // already added
     }
 
     const { error } = await supabase
       .from("wishlist_items")
       .insert([{ user_id: user.id, product_id: productId }]);
-    if (error) throw error;
+    if (error) {
+      console.error("[Wishlist] addToWishlist - insert error:", error);
+      throw error;
+    }
+    console.log("[Wishlist] Item added to wishlist, refreshing...");
     await fetchWishlistItems();
   };
 
   const removeFromWishlist = async (productId: string) => {
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) throw new Error("You must be logged in to use the wishlist.");
+    console.log("[Wishlist] removeFromWishlist - user", user, productId);
+    if (!user) {
+      console.error("[Wishlist] You must be logged in to use the wishlist.");
+      throw new Error("You must be logged in to use the wishlist.");
+    }
 
     const { error } = await supabase
       .from("wishlist_items")
       .delete()
       .eq("user_id", user.id)
       .eq("product_id", productId);
-    if (error) throw error;
+    if (error) {
+      console.error("[Wishlist] removeFromWishlist - error:", error);
+      throw error;
+    }
+    console.log("[Wishlist] Item removed from wishlist, refreshing...");
     await fetchWishlistItems();
   };
 
   const isInWishlist = (productId: string) => {
-    return items.some((item) => item.id === productId);
+    const found = items.some((item) => item.id === productId);
+    console.log("[Wishlist] isInWishlist", productId, found);
+    return found;
   };
 
   useEffect(() => {
     fetchWishlistItems();
     // Real-time: re-fetch on sign in/out
     const { data: { subscription } } = supabase.auth.onAuthStateChange(() => {
+      console.log("[Wishlist] Auth state change - refetching...");
       fetchWishlistItems();
     });
     return () => subscription?.unsubscribe();
@@ -121,3 +151,4 @@ export const useSupabaseWishlist = () => {
     refetch: fetchWishlistItems,
   };
 };
+
