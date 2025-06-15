@@ -21,8 +21,7 @@ interface ProductCardProps {
 }
 
 const cleanImage = (image: string) => {
-  // Remove base64 blobs or unwanted images from being stored in persistent storage (to avoid quota errors)
-  if (!image || image.startsWith("data:")) return ""; // skip base64
+  if (!image || image.startsWith("data:")) return "";
   return image;
 };
 
@@ -40,10 +39,8 @@ const ProductCard = ({
 }: ProductCardProps) => {
   const { addToCart } = useCart();
   const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
-
   const isWishlisted = isInWishlist(id);
 
-  // Use cleanImage before attempting to store or send item to context/storage:
   const handleAddToCart = async () => {
     try {
       await addToCart({
@@ -82,7 +79,7 @@ const ProductCard = ({
         await removeFromWishlist(id);
         toast({
           title: "Removed from wishlist",
-          description: `${name} has been removed from your wishlist.`
+          description: `${name} has been removed from your wishlist.`,
         });
       } else {
         await addToWishlist({
@@ -91,28 +88,31 @@ const ProductCard = ({
           price,
           image: cleanImage(image),
           originalPrice,
-          discount
+          discount,
         });
         toast({
           title: "Added to wishlist!",
-          description: `${name} has been added to your wishlist.`
+          description: `${name} has been added to your wishlist.`,
         });
       }
     } catch (error: any) {
-      if (error?.message?.toLowerCase().includes("quota")) {
+      if (
+        error?.message?.toLowerCase().includes("login") ||
+        error?.message?.toLowerCase().includes("auth")
+      ) {
         toast({
-          title: "Wishlist storage full",
-          description: "Your wishlist couldn't be saved because your browser storage is full.",
-          variant: "destructive"
+          title: "Login required",
+          description: "Please log in to use the wishlist feature.",
+          variant: "destructive",
         });
       } else {
         toast({
           title: "Error",
           description: "Failed to update wishlist. Please try again.",
-          variant: "destructive"
+          variant: "destructive",
         });
       }
-      console.error('[ProductCard] Failed to update wishlist:', error);
+      console.error("[ProductCard] Failed to update wishlist:", error);
     }
   };
 

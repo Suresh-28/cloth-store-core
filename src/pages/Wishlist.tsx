@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { toast } from '@/hooks/use-toast';
 
 const Wishlist = () => {
-  const { items, loading, removeFromWishlist } = useWishlist();
+  const { items, loading, removeFromWishlist, addToWishlist } = useWishlist();
   const { addToCart } = useCart();
 
   const handleAddToCart = async (item: any) => {
@@ -18,8 +18,8 @@ const Wishlist = () => {
         name: item.name,
         price: item.price,
         image: item.image,
-        size: 'M', // Default size
-        color: 'Default' // Default color
+        size: "M",
+        color: "Default"
       });
       toast({ title: "Added to cart!" });
     } catch (error) {
@@ -72,7 +72,7 @@ const Wishlist = () => {
   return (
     <div className="min-h-screen bg-white">
       <Header />
-      
+
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex items-center justify-between mb-8">
           <h1 className="text-3xl font-light text-gray-900">
@@ -103,19 +103,23 @@ const Wishlist = () => {
                   />
                 </Link>
               </div>
-              
+
               <div className="space-y-3">
                 <Link to={`/products/${item.id}`}>
-                  <h3 className="font-medium text-gray-900 hover:text-gray-700">{item.name}</h3>
+                  <h3 className="font-medium text-gray-900 hover:text-gray-700">
+                    {item.name}
+                  </h3>
                 </Link>
-                
+
                 <div className="flex items-center space-x-2">
                   <span className="font-medium text-gray-900">£{item.price}</span>
                   {item.originalPrice && (
-                    <span className="text-sm text-gray-500 line-through">£{item.originalPrice}</span>
+                    <span className="text-sm text-gray-500 line-through">
+                      £{item.originalPrice}
+                    </span>
                   )}
                 </div>
-                
+
                 <Button
                   onClick={() => handleAddToCart(item)}
                   className="w-full bg-black hover:bg-gray-800 text-white flex items-center justify-center space-x-2"

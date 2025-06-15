@@ -1,135 +1,115 @@
 
-import { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
-import { WishlistItem } from '@/contexts/WishlistContext';
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
+
+export interface SupabaseWishlistItem {
+  id: string;
+  name: string;
+  price: number;
+  image: string;
+  originalPrice?: number;
+  discount?: number;
+  product_id: string;
+}
 
 export const useSupabaseWishlist = () => {
-  const [items, setItems] = useState<WishlistItem[]>([]);
+  const [items, setItems] = useState<SupabaseWishlistItem[]>([]);
   const [loading, setLoading] = useState(true);
 
   const fetchWishlistItems = async () => {
+    setLoading(true);
     try {
-      setLoading(true);
       const { data: { user } } = await supabase.auth.getUser();
-      
       if (!user) {
         setItems([]);
         return;
       }
-
       const { data, error } = await supabase
-        .from('wishlist_items')
+        .from("wishlist_items")
         .select(`
           id,
           product_id,
+          created_at,
           products (
             id,
             name,
             price,
-            original_price,
             images,
+            original_price,
             discount
           )
         `)
-        .eq('user_id', user.id);
+        .eq("user_id", user.id);
 
       if (error) {
-        console.error('Error fetching wishlist:', error);
+        console.error("Error fetching wishlist:", error);
+        setItems([]);
         return;
       }
 
-      const wishlistItems: WishlistItem[] = data?.map(item => ({
+      const wishlistItems = (data || []).map((item: any) => ({
         id: item.product_id,
-        name: item.products.name,
-        price: Number(item.products.price),
-        image: item.products.images?.[0] || '',
-        originalPrice: item.products.original_price ? Number(item.products.original_price) : undefined,
-        discount: item.products.discount
-      })) || [];
+        name: item.products?.name || "Unknown",
+        price: Number(item.products?.price) || 0,
+        image: item.products?.images?.[0] || "",
+        originalPrice: item.products?.original_price,
+        discount: item.products?.discount,
+        product_id: item.product_id,
+      }));
 
       setItems(wishlistItems);
-    } catch (error) {
-      console.error('Error fetching wishlist:', error);
     } finally {
       setLoading(false);
     }
   };
 
-  const addToWishlist = async (item: WishlistItem) => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      if (!user) {
-        throw new Error('User must be authenticated');
-      }
+  const addToWishlist = async (productId: string) => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error("You must be logged in to use the wishlist.");
+    // Insert only if not already wishlisted
+    const { data: existing, error: existingError } = await supabase
+      .from("wishlist_items")
+      .select("*")
+      .eq("user_id", user.id)
+      .eq("product_id", productId);
 
-      const { error } = await supabase
-        .from('wishlist_items')
-        .insert([{
-          user_id: user.id,
-          product_id: item.id
-        }]);
+    if (existingError) throw existingError;
 
-      if (error) {
-        console.error('Error adding to wishlist:', error);
-        throw error;
-      }
-
-      setItems(prev => {
-        if (prev.find(wishlistItem => wishlistItem.id === item.id)) {
-          return prev;
-        }
-        return [...prev, item];
-      });
-    } catch (error) {
-      console.error('Error adding to wishlist:', error);
-      throw error;
+    if (existing && existing.length > 0) {
+      return; // already added
     }
+
+    const { error } = await supabase
+      .from("wishlist_items")
+      .insert([{ user_id: user.id, product_id: productId }]);
+    if (error) throw error;
+    await fetchWishlistItems();
   };
 
-  const removeFromWishlist = async (id: string) => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      if (!user) {
-        throw new Error('User must be authenticated');
-      }
+  const removeFromWishlist = async (productId: string) => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error("You must be logged in to use the wishlist.");
 
-      const { error } = await supabase
-        .from('wishlist_items')
-        .delete()
-        .eq('user_id', user.id)
-        .eq('product_id', id);
-
-      if (error) {
-        console.error('Error removing from wishlist:', error);
-        throw error;
-      }
-
-      setItems(prev => prev.filter(item => item.id !== id));
-    } catch (error) {
-      console.error('Error removing from wishlist:', error);
-      throw error;
-    }
+    const { error } = await supabase
+      .from("wishlist_items")
+      .delete()
+      .eq("user_id", user.id)
+      .eq("product_id", productId);
+    if (error) throw error;
+    await fetchWishlistItems();
   };
 
-  const isInWishlist = (id: string) => {
-    return items.some(item => item.id === id);
+  const isInWishlist = (productId: string) => {
+    return items.some((item) => item.id === productId);
   };
 
   useEffect(() => {
     fetchWishlistItems();
-
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === 'SIGNED_IN') {
-        fetchWishlistItems();
-      } else if (event === 'SIGNED_OUT') {
-        setItems([]);
-      }
+    // Real-time: re-fetch on sign in/out
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(() => {
+      fetchWishlistItems();
     });
-
-    return () => subscription.unsubscribe();
+    return () => subscription?.unsubscribe();
   }, []);
 
   return {
@@ -138,6 +118,6 @@ export const useSupabaseWishlist = () => {
     addToWishlist,
     removeFromWishlist,
     isInWishlist,
-    refetch: fetchWishlistItems
+    refetch: fetchWishlistItems,
   };
 };
