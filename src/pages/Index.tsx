@@ -86,13 +86,6 @@ const Index = () => {
                 Shop Collection
               </Button>
             </Link>
-            {!user && (
-              <Link to="/auth">
-                <Button size="lg" variant="outline" className="px-8 py-3">
-                  Sign In
-                </Button>
-              </Link>
-            )}
           </div>
         </div>
       </section>
