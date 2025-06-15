@@ -71,7 +71,7 @@ const ProductDetail = () => {
       });
       toast({ title: "Added to cart!" });
     } catch (error: any) {
-      if (error?.message?.includes("quota")) {
+      if (error?.message?.toLowerCase().includes("quota")) {
         toast({
           title: "Cart storage full",
           description: "Your cart couldn't be saved because your browser storage is full.",
@@ -83,6 +83,7 @@ const ProductDetail = () => {
           variant: "destructive"
         });
       }
+      console.error('[ProductDetail] Failed to add to cart:', error);
     }
   };
 
@@ -103,7 +104,7 @@ const ProductDetail = () => {
         toast({ title: "Added to wishlist!" });
       }
     } catch (error: any) {
-      if (error?.message?.includes("quota")) {
+      if (error?.message?.toLowerCase().includes("quota")) {
         toast({
           title: "Wishlist storage full",
           description: "Your wishlist couldn't be saved because your browser storage is full.",
@@ -115,6 +116,7 @@ const ProductDetail = () => {
           variant: "destructive"
         });
       }
+      console.error('[ProductDetail] Failed to update wishlist:', error);
     }
   };
 

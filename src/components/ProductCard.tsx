@@ -21,7 +21,7 @@ interface ProductCardProps {
 }
 
 const cleanImage = (image: string) => {
-  // Only use image URL, not base64 blobs for localStorage storage
+  // Remove base64 blobs or unwanted images from being stored in persistent storage (to avoid quota errors)
   if (!image || image.startsWith("data:")) return ""; // skip base64
   return image;
 };
@@ -43,6 +43,7 @@ const ProductCard = ({
 
   const isWishlisted = isInWishlist(id);
 
+  // Use cleanImage before attempting to store or send item to context/storage:
   const handleAddToCart = async () => {
     try {
       await addToCart({
@@ -58,7 +59,7 @@ const ProductCard = ({
         description: `${name} has been added to your cart.`
       });
     } catch (error: any) {
-      if (error?.message?.includes("quota")) {
+      if (error?.message?.toLowerCase().includes("quota")) {
         toast({
           title: "Cart storage full",
           description: "Your cart couldn't be saved because your browser storage is full.",
@@ -71,6 +72,7 @@ const ProductCard = ({
           variant: "destructive"
         });
       }
+      console.error('[ProductCard] Failed to add to cart:', error);
     }
   };
 
@@ -97,7 +99,7 @@ const ProductCard = ({
         });
       }
     } catch (error: any) {
-      if (error?.message?.includes("quota")) {
+      if (error?.message?.toLowerCase().includes("quota")) {
         toast({
           title: "Wishlist storage full",
           description: "Your wishlist couldn't be saved because your browser storage is full.",
@@ -110,6 +112,7 @@ const ProductCard = ({
           variant: "destructive"
         });
       }
+      console.error('[ProductCard] Failed to update wishlist:', error);
     }
   };
 

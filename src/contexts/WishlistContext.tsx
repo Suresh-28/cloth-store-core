@@ -59,8 +59,14 @@ export const WishlistProvider = ({ children }: { children: ReactNode }) => {
       console.log('[WishlistContext] Wishlist saved to localStorage:', items);
     } catch (err: any) {
       console.error('[WishlistContext] Failed to save wishlist to localStorage:', err);
-      // Propagate error for callbacks to catch and maybe show a toast
-      throw new Error('quota error: wishlist could not be saved');
+      if (err && err.name === 'QuotaExceededError') {
+        localStorage.removeItem('wishlist');
+        setItems([]);
+        // Add more detailed error logging
+        console.error('[WishlistContext] Local storage quota exceeded! Cleared. Too much data (large images?) stored in wishlist. Advise user to retry with smaller images.');
+        throw new Error('quota error: wishlist could not be saved');
+      }
+      throw err;
     }
   }, [items]);
 
@@ -135,3 +141,4 @@ export const useWishlist = () => {
 };
 
 // ... done! The only changes are added console.log for debugging.
+

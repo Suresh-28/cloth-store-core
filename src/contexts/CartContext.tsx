@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, ReactNode, useState, useEffect } from 'react';
 
 export interface CartItem {
@@ -46,11 +45,11 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
         localStorage.removeItem('cart');
         setItems([]);
         console.error(
-          'Local storage quota exceeded! Cart has been cleared. Please contact support if this continues.'
+          '[CartContext] Local storage quota exceeded! Cart has been cleared (large image data?)'
         );
         throw new Error('quota error: cart could not be saved');
       } else {
-        console.error('Failed to save cart to localStorage', error);
+        console.error('[CartContext] Failed to save cart to localStorage', error);
         throw error;
       }
     }
@@ -61,7 +60,6 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
       const existingItem = prev.find(
         item => item.id === newItem.id && item.size === newItem.size && item.color === newItem.color
       );
-
       if (existingItem) {
         return prev.map(item =>
           item.id === newItem.id && item.size === newItem.size && item.color === newItem.color
@@ -69,7 +67,6 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
             : item
         );
       }
-
       return [...prev, { ...newItem, quantity: 1 }];
     });
   };
