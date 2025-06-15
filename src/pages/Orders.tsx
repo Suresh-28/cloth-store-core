@@ -202,6 +202,12 @@ const Orders = () => {
 
   const summary = getOrderSummary();
 
+  const isGuestOrder = (order: Order) => {
+    // Guest orders have email, but no profile/user_id info.
+    // Since local-only orders context doesn't retain user info, we infer by customer field.
+    return order.customer === "Guest" || /guest/i.test(order.customer) || (!order.email && !order.phone);
+  };
+
   return (
     <div className="min-h-screen bg-white">
       <Header />
@@ -279,7 +285,14 @@ const Orders = () => {
                 <CardHeader className="border-b border-gray-100">
                   <div className="flex justify-between items-start">
                     <div>
-                      <CardTitle className="text-lg font-medium">Order #{order.id}</CardTitle>
+                      <CardTitle className="text-lg font-medium flex items-center gap-2">
+                        Order #{order.id}
+                        {isGuestOrder(order) && (
+                          <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded bg-gray-200 text-xs text-gray-700 font-semibold border border-gray-300">
+                            Guest Order
+                          </span>
+                        )}
+                      </CardTitle>
                       <p className="text-sm text-gray-600 mt-1">
                         Placed on {new Date(order.date).toLocaleDateString('en-GB', {
                           day: 'numeric',
@@ -287,7 +300,12 @@ const Orders = () => {
                           year: 'numeric'
                         })}
                       </p>
-                      <p className="text-sm text-gray-600">Customer: {order.customer}</p>
+                      <p className="text-sm text-gray-600">
+                        Customer: {order.customer}
+                        {isGuestOrder(order) && (
+                          <span className="ml-1 text-xs text-gray-400">(Guest)</span>
+                        )}
+                      </p>
                     </div>
                     <div className="text-right flex flex-col items-end space-y-2">
                       <div className={`inline-flex items-center space-x-2 px-3 py-1 rounded-full text-sm font-medium border ${getStatusColor(order.status)}`}>
