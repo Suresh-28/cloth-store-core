@@ -118,13 +118,14 @@ export const useSupabaseWishlist = () => {
       // Guest: add/update to localStorage (need product info)
       if (!productMeta) return;
       let guestItems = getGuestWishlist();
+      // Allow image to be optional/empty string
       if (!guestItems.some(item => item.id === productId)) {
         guestItems = [
           ...guestItems, {
             id: productId,
             name: productMeta.name ?? '',
             price: productMeta.price ?? 0,
-            image: productMeta.image ?? '',
+            image: typeof productMeta.image === "string" ? productMeta.image : '',  // allow blank
             // optional fields:
             originalPrice: productMeta.originalPrice,
             discount: productMeta.discount,
