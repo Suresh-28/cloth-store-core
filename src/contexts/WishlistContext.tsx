@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, ReactNode, useState, useEffect } from 'react';
 
 export interface WishlistItem {
@@ -47,6 +46,9 @@ export const WishlistProvider = ({ children }: { children: ReactNode }) => {
 
   // Save to localStorage whenever items change
   useEffect(() => {
+    // Don't save on initial load when items is empty
+    if (items.length === 0) return;
+    
     try {
       localStorage.setItem('wishlist', JSON.stringify(items));
     } catch (error) {
@@ -54,26 +56,9 @@ export const WishlistProvider = ({ children }: { children: ReactNode }) => {
       
       // Handle quota exceeded error
       if (error instanceof DOMException && error.name === 'QuotaExceededError') {
-        console.warn('localStorage quota exceeded, clearing old data and retrying');
-        
-        // Try to clear some space by removing the wishlist and trying again
-        localStorage.removeItem('wishlist');
-        
-        try {
-          // Try to save a smaller subset if there are many items
-          const itemsToSave = items.slice(0, 50); // Limit to 50 items max
-          localStorage.setItem('wishlist', JSON.stringify(itemsToSave));
-          
-          // Update state to match what was actually saved
-          if (itemsToSave.length < items.length) {
-            setItems(itemsToSave);
-            console.warn('Wishlist was truncated to fit in localStorage');
-          }
-        } catch (retryError) {
-          console.error('Failed to save even truncated wishlist:', retryError);
-          // If all else fails, clear the wishlist
-          setItems([]);
-        }
+        console.warn('localStorage quota exceeded, using memory-only storage');
+        // Don't try to save to localStorage anymore, just keep in memory
+        // The wishlist will work during the session but won't persist
       }
     }
   }, [items]);
