@@ -39,7 +39,6 @@ export const useCheckout = () => {
   const loadSavedContactInfo = async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      
       if (!user) return;
 
       // Try to get from user profile first
@@ -85,31 +84,24 @@ export const useCheckout = () => {
     }
   };
 
+  // Updated to allow guest (unauthenticated) checkout
   const saveCheckoutData = async (formData: CheckoutFormData) => {
     setIsSubmitting(true);
-    
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      
-      if (!user) {
-        toast({
-          title: "Authentication required",
-          description: "Please sign in to complete your order.",
-          variant: "destructive"
-        });
-        return false;
-      }
 
-      // Update user profile with contact information
-      await supabase
-        .from('profiles')
-        .upsert({
-          id: user.id,
-          email: formData.email,
-          full_name: `${formData.firstName} ${formData.lastName}`.trim(),
-          phone: formData.phone,
-          updated_at: new Date().toISOString()
-        });
+      // If user is logged in, update their profile
+      if (user) {
+        await supabase
+          .from('profiles')
+          .upsert({
+            id: user.id,
+            email: formData.email,
+            full_name: `${formData.firstName} ${formData.lastName}`.trim(),
+            phone: formData.phone,
+            updated_at: new Date().toISOString()
+          });
+      }
 
       // Calculate totals
       const subtotal = getTotalPrice();
@@ -135,16 +127,21 @@ export const useCheckout = () => {
         country: formData.country
       };
 
-      // Save order to Supabase
+      // Save order to Supabase:
+      // if guest, don't include user_id
+      const orderInsert: any = {
+        total_amount: totalWithTax,
+        shipping_address: shippingAddress,
+        status: 'pending',
+        payment_status: 'pending'
+      };
+      if (user) {
+        orderInsert.user_id = user.id;
+      }
+
       const { data: orderData, error: orderError } = await supabase
         .from('orders')
-        .insert({
-          user_id: user.id,
-          total_amount: totalWithTax,
-          shipping_address: shippingAddress,
-          status: 'pending',
-          payment_status: 'pending'
-        })
+        .insert(orderInsert)
         .select()
         .single();
 
@@ -174,17 +171,17 @@ export const useCheckout = () => {
 
       if (itemsError) {
         console.error('Error saving order items:', itemsError);
-        // Don't return false here as the order was created successfully
+        // Still proceed
       }
 
-      // Create local order for context
+      // Create local order for context (so users see their order summary)
       const newOrder: Order = {
         id: orderData.id,
         date: new Date().toLocaleDateString('en-GB'),
         status: 'pending',
         total: totalWithTax,
         items: orderItems,
-        customer: `${formData.firstName} ${formData.lastName}`,
+        customer: `${formData.firstName} ${formData.lastName}` || 'Guest',
         email: formData.email,
         shippingAddress: shippingAddress,
         phone: formData.phone,
@@ -193,14 +190,17 @@ export const useCheckout = () => {
         tax: tax
       };
 
-      // Add to local context
       addOrder(newOrder);
 
       console.log('Checkout data saved successfully:', newOrder);
-      
+
+      let message = `Order #${orderData.id.slice(0, 8)} has been created successfully.`;
+      if (!user) {
+        message += " (as guest)";
+      }
       toast({
         title: "Order saved!",
-        description: `Order #${orderData.id.slice(0, 8)} has been created successfully.`
+        description: message
       });
 
       return true;
