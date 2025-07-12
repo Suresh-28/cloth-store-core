@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { useCart } from '@/contexts/CartContext';
 import { useWishlist } from '@/contexts/WishlistContext';
 import { toast } from '@/hooks/use-toast';
+import productPlaceholder from '@/assets/product-placeholder.jpg';
 
 interface ProductCardProps {
   id: string;
@@ -112,9 +113,12 @@ const ProductCard = ({
       <div className="relative aspect-square overflow-hidden bg-gray-100">
         <Link to={`/products/${id}`}>
           <img
-            src={image}
+            src={cleanImage(image) || productPlaceholder}
             alt={name}
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+            onError={(e) => {
+              e.currentTarget.src = productPlaceholder;
+            }}
           />
         </Link>
         
