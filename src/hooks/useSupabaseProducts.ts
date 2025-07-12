@@ -145,9 +145,10 @@ export const useSupabaseProducts = () => {
 
   const deleteProduct = async (id: string) => {
     try {
+      // Actually delete from database instead of just setting inactive
       const { error } = await supabase
         .from('products')
-        .update({ is_active: false })
+        .delete()
         .eq('id', id);
 
       if (error) {
@@ -155,6 +156,7 @@ export const useSupabaseProducts = () => {
         throw error;
       }
 
+      // Update local state to remove the deleted product
       setProducts(prev => prev.filter(p => p.id !== id));
     } catch (error) {
       console.error('Error deleting product:', error);
