@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Package, Clock, CheckCircle, Truck, Search, Download } from 'lucide-react';
 import Header from '@/components/Header';
+import BackButton from '@/components/BackButton';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Input } from '@/components/ui/input';
@@ -213,6 +214,7 @@ const Orders = () => {
       <Header />
       
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <BackButton className="mb-4" />
         <div className="mb-8">
           <h1 className="text-3xl font-light text-gray-900 mb-4">Your Orders</h1>
           

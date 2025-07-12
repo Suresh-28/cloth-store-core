@@ -1,6 +1,7 @@
 
 import { useState } from 'react';
 import Header from '@/components/Header';
+import BackButton from '@/components/BackButton';
 import ProductCard from '@/components/ProductCard';
 import { useProducts } from '@/contexts/ProductsContext';
 
@@ -39,6 +40,7 @@ const Products = () => {
       <Header />
       
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <BackButton className="mb-4" />
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <h1 className="text-2xl font-light text-gray-900">All products</h1>

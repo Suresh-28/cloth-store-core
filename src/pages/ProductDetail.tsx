@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Heart, ChevronDown } from 'lucide-react';
+import BackButton from '@/components/BackButton';
 import Header from '@/components/Header';
 import SizeGuide from '@/components/SizeGuide';
 import ShippingInfo from '@/components/ShippingInfo';
@@ -38,6 +39,7 @@ const ProductDetail = () => {
       <div className="min-h-screen bg-white">
         <Header />
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <BackButton className="mb-4" />
           <p className="text-center text-gray-600">Product not found</p>
           <div className="text-center mt-4">
             <Link to="/products">
@@ -125,6 +127,7 @@ const ProductDetail = () => {
       <Header />
       
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <BackButton className="mb-4" />
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
           {/* Images */}
           <div className="space-y-4">

@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Header from '@/components/Header';
+import BackButton from '@/components/BackButton';
 import { useCart } from '@/contexts/CartContext';
 import { useCheckout } from '@/hooks/useCheckout';
 import { Button } from '@/components/ui/button';
@@ -57,6 +58,7 @@ const Checkout = () => {
       <Header />
       
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <BackButton className="mb-4" />
         <h1 className="text-3xl font-light text-gray-900 mb-8">Checkout</h1>
 
         <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-2 gap-12">

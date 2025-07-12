@@ -1,6 +1,7 @@
 
 import { Link } from 'react-router-dom';
 import { ShoppingBag, Users, Package, Bell } from 'lucide-react';
+import BackButton from '@/components/BackButton';
 import { Button } from '@/components/ui/button';
 import { useAdminDashboard } from '@/hooks/useAdminDashboard';
 import StatsCards from '@/components/admin/StatsCards';
@@ -39,6 +40,7 @@ const AdminDashboard = () => {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <BackButton to="/" className="mb-4" />
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
           <p className="text-gray-600">Welcome back! Here's what's happening with your store.</p>

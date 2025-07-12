@@ -1,6 +1,7 @@
 
 import { Link } from 'react-router-dom';
 import { Trash2, Plus, Minus } from 'lucide-react';
+import BackButton from '@/components/BackButton';
 import Header from '@/components/Header';
 import { useCart } from '@/contexts/CartContext';
 import { Button } from '@/components/ui/button';
@@ -13,6 +14,7 @@ const Cart = () => {
       <div className="min-h-screen bg-white">
         <Header />
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+          <BackButton className="mb-4" />
           <div className="text-center">
             <h1 className="text-3xl font-light text-gray-900 mb-4">Your Cart</h1>
             <p className="text-gray-600 mb-8">Your cart is empty</p>
@@ -32,6 +34,7 @@ const Cart = () => {
       <Header />
       
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <BackButton className="mb-4" />
         <div className="flex items-center justify-between mb-8">
           <h1 className="text-3xl font-light text-gray-900">Shopping Cart</h1>
           <Button

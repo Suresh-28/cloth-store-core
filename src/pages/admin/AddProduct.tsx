@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Upload, X, Plus, Trash2 } from 'lucide-react';
+import BackButton from '@/components/BackButton';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -241,6 +242,7 @@ const AddProduct = () => {
       </div>
 
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <BackButton to="/admin/products" className="mb-4" />
         <h1 className="text-3xl font-bold text-gray-900 mb-8">Add New Product</h1>
 
         <form onSubmit={handleSubmit} className="space-y-8">

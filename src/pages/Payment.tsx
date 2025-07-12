@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Shield, Smartphone, Copy } from 'lucide-react';
+import BackButton from '@/components/BackButton';
 import Header from '@/components/Header';
 import PaymentTimer from '@/components/PaymentTimer';
 import { useCart } from '@/contexts/CartContext';
@@ -171,6 +172,7 @@ const Payment = () => {
       <Header />
       
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <BackButton className="mb-4" />
         <h1 className="text-3xl font-light text-gray-900 mb-8">Payment</h1>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">

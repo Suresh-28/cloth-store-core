@@ -1,6 +1,7 @@
 
 import { Link } from 'react-router-dom';
 import { Heart, ShoppingBag } from 'lucide-react';
+import BackButton from '@/components/BackButton';
 import Header from '@/components/Header';
 import { useWishlist } from '@/contexts/WishlistContext';
 import { useCart } from '@/contexts/CartContext';
@@ -54,6 +55,7 @@ const Wishlist = () => {
       <div className="min-h-screen bg-white">
         <Header />
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+          <BackButton className="mb-4" />
           <div className="text-center">
             <Heart size={48} className="mx-auto text-gray-400 mb-4" />
             <h1 className="text-3xl font-light text-gray-900 mb-4">Your Wishlist</h1>
@@ -74,6 +76,7 @@ const Wishlist = () => {
       <Header />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <BackButton className="mb-4" />
         <div className="flex items-center justify-between mb-8">
           <h1 className="text-3xl font-light text-gray-900">
             Wishlist ({items.length})
