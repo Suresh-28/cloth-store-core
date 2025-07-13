@@ -1,23 +1,80 @@
 
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Plus, Edit, Trash2, Search } from 'lucide-react';
+import { Plus, Edit, Trash2, Search, X, Save } from 'lucide-react';
 import BackButton from '@/components/BackButton';
 import { useProducts } from '@/contexts/ProductsContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import { toast } from '@/hooks/use-toast';
 
 const AdminProducts = () => {
-  const { products, loading, deleteProduct } = useProducts();
+  const { products, loading, deleteProduct, updateProduct } = useProducts();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
+  const [editingProduct, setEditingProduct] = useState<any>(null);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editForm, setEditForm] = useState({
+    name: '',
+    description: '',
+    price: '',
+    originalPrice: '',
+    category: 'men',
+    sizes: [] as string[],
+    colors: [] as string[],
+    images: [] as string[],
+    features: [] as string[],
+    isNew: false,
+    discount: ''
+  });
 
   const filteredProducts = products.filter(product => 
     product.name.toLowerCase().includes(searchTerm.toLowerCase()) &&
     (selectedCategory === 'all' || product.category === selectedCategory)
   );
+
+  const handleEditProduct = (product: any) => {
+    setEditingProduct(product);
+    setEditForm({
+      name: product.name || '',
+      description: product.description || '',
+      price: product.price?.toString() || '',
+      originalPrice: product.originalPrice?.toString() || '',
+      category: product.category || 'men',
+      sizes: product.sizes || [],
+      colors: product.colors?.map((c: any) => typeof c === 'string' ? c : c.name) || [],
+      images: product.images || [],
+      features: product.features || [],
+      isNew: product.isNew || false,
+      discount: product.discount?.toString() || ''
+    });
+    setIsEditModalOpen(true);
+  };
+
+  const handleSaveProduct = async () => {
+    if (!editingProduct) return;
+    
+    try {
+      const updatedProduct = {
+        ...editForm,
+        price: parseFloat(editForm.price) || 0,
+        originalPrice: editForm.originalPrice ? parseFloat(editForm.originalPrice) : null,
+        discount: editForm.discount ? parseInt(editForm.discount) : null,
+        colors: editForm.colors.map(color => ({ name: color, value: color }))
+      };
+      
+      await updateProduct(editingProduct.id, updatedProduct);
+      toast({ title: "Product updated successfully" });
+      setIsEditModalOpen(false);
+      setEditingProduct(null);
+    } catch (error) {
+      toast({ title: "Failed to update product", variant: "destructive" });
+    }
+  };
 
   const handleDeleteProduct = async (id: string) => {
     if (window.confirm('Are you sure you want to delete this product?')) {
@@ -142,7 +199,11 @@ const AdminProducts = () => {
                     <span className="font-medium">{product.rating}</span> rating
                   </div>
                   <div className="flex space-x-2">
-                    <Button size="sm" variant="outline">
+                    <Button 
+                      size="sm" 
+                      variant="outline"
+                      onClick={() => handleEditProduct(product)}
+                    >
                       <Edit size={14} />
                     </Button>
                     <Button 
@@ -166,6 +227,164 @@ const AdminProducts = () => {
           </div>
         )}
       </div>
+
+      {/* Edit Product Modal */}
+      <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Edit Product</DialogTitle>
+          </DialogHeader>
+          
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <Label htmlFor="name">Product Name</Label>
+              <Input
+                id="name"
+                value={editForm.name}
+                onChange={(e) => setEditForm(prev => ({ ...prev, name: e.target.value }))}
+                placeholder="Enter product name"
+              />
+            </div>
+
+            <div className="grid gap-2">
+              <Label htmlFor="description">Description</Label>
+              <Textarea
+                id="description"
+                value={editForm.description}
+                onChange={(e) => setEditForm(prev => ({ ...prev, description: e.target.value }))}
+                placeholder="Enter product description"
+                rows={3}
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="grid gap-2">
+                <Label htmlFor="price">Price (£)</Label>
+                <Input
+                  id="price"
+                  type="number"
+                  step="0.01"
+                  value={editForm.price}
+                  onChange={(e) => setEditForm(prev => ({ ...prev, price: e.target.value }))}
+                  placeholder="0.00"
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="originalPrice">Original Price (£)</Label>
+                <Input
+                  id="originalPrice"
+                  type="number"
+                  step="0.01"
+                  value={editForm.originalPrice}
+                  onChange={(e) => setEditForm(prev => ({ ...prev, originalPrice: e.target.value }))}
+                  placeholder="0.00"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="grid gap-2">
+                <Label htmlFor="category">Category</Label>
+                <select
+                  id="category"
+                  value={editForm.category}
+                  onChange={(e) => setEditForm(prev => ({ ...prev, category: e.target.value }))}
+                  className="border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-black"
+                >
+                  <option value="men">Men</option>
+                  <option value="women">Women</option>
+                </select>
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="discount">Discount (%)</Label>
+                <Input
+                  id="discount"
+                  type="number"
+                  value={editForm.discount}
+                  onChange={(e) => setEditForm(prev => ({ ...prev, discount: e.target.value }))}
+                  placeholder="0"
+                />
+              </div>
+            </div>
+
+            <div className="grid gap-2">
+              <Label htmlFor="sizes">Sizes (comma-separated)</Label>
+              <Input
+                id="sizes"
+                value={editForm.sizes.join(', ')}
+                onChange={(e) => setEditForm(prev => ({ 
+                  ...prev, 
+                  sizes: e.target.value.split(',').map(s => s.trim()).filter(s => s) 
+                }))}
+                placeholder="S, M, L, XL"
+              />
+            </div>
+
+            <div className="grid gap-2">
+              <Label htmlFor="colors">Colors (comma-separated)</Label>
+              <Input
+                id="colors"
+                value={editForm.colors.join(', ')}
+                onChange={(e) => setEditForm(prev => ({ 
+                  ...prev, 
+                  colors: e.target.value.split(',').map(s => s.trim()).filter(s => s) 
+                }))}
+                placeholder="Black, White, Navy"
+              />
+            </div>
+
+            <div className="grid gap-2">
+              <Label htmlFor="images">Image URLs (comma-separated)</Label>
+              <Textarea
+                id="images"
+                value={editForm.images.join(', ')}
+                onChange={(e) => setEditForm(prev => ({ 
+                  ...prev, 
+                  images: e.target.value.split(',').map(s => s.trim()).filter(s => s) 
+                }))}
+                placeholder="https://example.com/image1.jpg, https://example.com/image2.jpg"
+                rows={2}
+              />
+            </div>
+
+            <div className="grid gap-2">
+              <Label htmlFor="features">Features (comma-separated)</Label>
+              <Textarea
+                id="features"
+                value={editForm.features.join(', ')}
+                onChange={(e) => setEditForm(prev => ({ 
+                  ...prev, 
+                  features: e.target.value.split(',').map(s => s.trim()).filter(s => s) 
+                }))}
+                placeholder="100% Cotton, Machine Washable, Premium Quality"
+                rows={2}
+              />
+            </div>
+
+            <div className="flex items-center space-x-2">
+              <input
+                type="checkbox"
+                id="isNew"
+                checked={editForm.isNew}
+                onChange={(e) => setEditForm(prev => ({ ...prev, isNew: e.target.checked }))}
+                className="rounded border-gray-300"
+              />
+              <Label htmlFor="isNew">Mark as New Product</Label>
+            </div>
+          </div>
+
+          <div className="flex justify-end space-x-2">
+            <Button variant="outline" onClick={() => setIsEditModalOpen(false)}>
+              <X size={16} className="mr-2" />
+              Cancel
+            </Button>
+            <Button onClick={handleSaveProduct} className="bg-black hover:bg-gray-800 text-white">
+              <Save size={16} className="mr-2" />
+              Save Changes
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
