@@ -71,9 +71,10 @@ const AdminUsers = () => {
   useEffect(() => {
     fetchUsers();
 
-    // Set up real-time subscription for profiles
+    // Set up real-time subscription for profiles with unique channel names
+    const profilesChannelName = `profiles-changes-${Date.now()}-${Math.random()}`;
     const profilesChannel = supabase
-      .channel('profiles-changes')
+      .channel(profilesChannelName)
       .on(
         'postgres_changes',
         {
@@ -88,9 +89,10 @@ const AdminUsers = () => {
       )
       .subscribe();
 
-    // Set up real-time subscription for orders (to update stats)
+    // Set up real-time subscription for orders (to update stats) with unique channel name
+    const ordersChannelName = `orders-changes-${Date.now()}-${Math.random()}`;
     const ordersChannel = supabase
-      .channel('orders-changes')
+      .channel(ordersChannelName)
       .on(
         'postgres_changes',
         {

@@ -167,9 +167,10 @@ export const useSupabaseProducts = () => {
   useEffect(() => {
     fetchProducts();
     
-    // Set up real-time subscription for products
+    // Set up real-time subscription for products with a unique channel name
+    const channelName = `products-changes-${Date.now()}-${Math.random()}`;
     const productsChannel = supabase
-      .channel('products-changes')
+      .channel(channelName)
       .on(
         'postgres_changes',
         {
@@ -187,7 +188,7 @@ export const useSupabaseProducts = () => {
     return () => {
       supabase.removeChannel(productsChannel);
     };
-  }, []);
+  }, []); // Empty dependency array to run only once
 
   return {
     products,
