@@ -93,6 +93,15 @@ const Header = () => {
                   <ul className="py-1">
                     <li>
                       <Link
+                        to="/profile"
+                        className="flex items-center px-4 py-2 hover:bg-gray-100 text-gray-700"
+                        onClick={() => setProfileOpen(false)}
+                      >
+                        Profile
+                      </Link>
+                    </li>
+                    <li>
+                      <Link
                         to="/orders"
                         className="flex items-center px-4 py-2 hover:bg-gray-100 text-gray-700"
                         onClick={() => setProfileOpen(false)}
@@ -100,7 +109,7 @@ const Header = () => {
                         Orders
                       </Link>
                     </li>
-                    {/* Future: Add Profile/Logout links here */}
+                    {/* Future: Add Logout link here */}
                   </ul>
                 </div>
               )}

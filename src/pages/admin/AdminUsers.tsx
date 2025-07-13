@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Search, Mail, Phone, Calendar, MoreHorizontal } from 'lucide-react';
+import { Search, Mail, Phone, Calendar, MoreHorizontal, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -143,6 +143,10 @@ const AdminUsers = () => {
               <span className="text-gray-400">|</span>
               <span className="text-lg font-medium text-gray-900">Users</span>
             </div>
+            <Button className="bg-black hover:bg-gray-800 text-white">
+              <Plus size={16} className="mr-2" />
+              Add User
+            </Button>
           </div>
         </div>
       </div>
